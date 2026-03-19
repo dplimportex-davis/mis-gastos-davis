@@ -1080,271 +1080,91 @@ function renderAnnual() {
   const el = document.getElementById("annual-content");
   const fmt = n => n.toLocaleString("es-PE", {minimumFractionDigits:2, maximumFractionDigits:2});
 
-  // Build data per month
-  const monthData = MONTHS.map(month => {
-    const fExp = expenses.filter(e => e.month===month && e.currency==="PEN" && e.type!=="Inversion");
-    const fInv = expenses.filter(e => e.month===month && e.currency==="PEN" && e.type==="Inversion");
-    const fIng = ingresos.filter(e => e.month===month && e.currency==="PEN");
-    const fLay = layExpenses.filter(e => e.month===month && e.currency==="PEN");
-    const ing = fIng.reduce((s,e)=>s+e.amount,0);
-    const exp = fExp.reduce((s,e)=>s+e.amount,0);
-    const inv = fInv.reduce((s,e)=>s+e.amount,0);
-    const lay = fLay.reduce((s,e)=>s+e.amount,0);
+  const monthData = MONTHS.map(function(month) {
+    const fExp = expenses.filter(function(e){return e.month===month&&e.currency==="PEN"&&e.type!=="Inversion";});
+    const fInv = expenses.filter(function(e){return e.month===month&&e.currency==="PEN"&&e.type==="Inversion";});
+    const fIng = ingresos.filter(function(e){return e.month===month&&e.currency==="PEN";});
+    const fLay = layExpenses.filter(function(e){return e.month===month&&e.currency==="PEN";});
+    const ing = fIng.reduce(function(s,e){return s+e.amount;},0);
+    const exp = fExp.reduce(function(s,e){return s+e.amount;},0);
+    const inv = fInv.reduce(function(s,e){return s+e.amount;},0);
+    const lay = fLay.reduce(function(s,e){return s+e.amount;},0);
     const bal = ing - exp - inv - lay;
-    return { month, ing, exp, inv, lay, bal, total: exp+inv+lay };
+    return {month:month, ing:ing, exp:exp, inv:inv, lay:lay, bal:bal, total:exp+inv+lay};
   });
 
-  // Totals
-  const totIng = monthData.reduce((s,m)=>s+m.ing,0);
-  const totExp = monthData.reduce((s,m)=>s+m.exp,0);
-  const totInv = monthData.reduce((s,m)=>s+m.inv,0);
-  const totLay = monthData.reduce((s,m)=>s+m.lay,0);
+  const totIng = monthData.reduce(function(s,m){return s+m.ing;},0);
+  const totExp = monthData.reduce(function(s,m){return s+m.exp;},0);
+  const totInv = monthData.reduce(function(s,m){return s+m.inv;},0);
+  const totLay = monthData.reduce(function(s,m){return s+m.lay;},0);
   const totBal = totIng - totExp - totInv - totLay;
 
-  // Max for bar scaling
-  const maxVal = Math.max(...monthData.map(m => Math.max(m.ing, m.total)), 1);
+  const activeMonths = monthData.filter(function(m){return m.ing>0||m.total>0;});
+  const bestMonth = activeMonths.length ? activeMonths.reduce(function(a,b){return b.bal>a.bal?b:a;},activeMonths[0]) : null;
+  const worstMonth = activeMonths.length ? activeMonths.reduce(function(a,b){return b.total>a.total?b:a;},activeMonths[0]) : null;
+  const maxVal = Math.max.apply(null, monthData.map(function(m){return Math.max(m.ing,m.total);}).concat([1]));
 
-  // Best/worst months
-  const activeMonths = monthData.filter(m => m.ing > 0 || m.total > 0);
-  const bestMonth = activeMonths.length ? activeMonths.reduce((a,b) => b.bal > a.bal ? b : a, activeMonths[0]) : null;
-  const worstMonth = activeMonths.length ? activeMonths.reduce((a,b) => b.total > a.total ? b : a, activeMonths[0]) : null;
-
-  const monthRows = monthData.map(m => {
-    const hasData = m.ing > 0 || m.total > 0;
-    const balColor = m.bal > 0 ? "#a0f0ea" : m.bal < 0 ? "#ff6b6b" : "#8b949e";
-    const ingW = Math.min((m.ing/maxVal)*100, 100);
-    const expW = Math.min((m.total/maxVal)*100, 100);
-    return `
-      <div style="padding:10px 0;border-bottom:1px solid #1c2333">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-          <span style="font-size:13px;font-weight:700;min-width:90px">${m.month.substring(0,3)}</span>
-          ${hasData ? `
-          <div style="flex:1;margin:0 10px">
-            <div style="display:flex;gap:2px;height:6px;border-radius:3px;overflow:hidden;margin-bottom:2px">
-              <div style="width:${ingW}%;background:linear-gradient(90deg,#37D1BF,#a0f0ea);border-radius:3px;transition:width .5s"></div>
-            </div>
-            <div style="display:flex;gap:2px;height:6px;border-radius:3px;overflow:hidden">
-              <div style="width:${expW}%;background:linear-gradient(90deg,#c0392b,#ff6b6b);border-radius:3px;transition:width .5s"></div>
-            </div>
-          </div>
-          <div style="text-align:right;min-width:90px">
-            <div style="font-size:12px;font-weight:700;color:${balColor}">S/${fmt(Math.abs(m.bal))} ${m.bal>=0?"▲":"▼"}</div>
-            <div style="font-size:10px;color:#8b949e">S/${fmt(m.ing)} in · S/${fmt(m.total)} out</div>
-          </div>` : `<span style="font-size:11px;color:#8b949e;flex:1;text-align:center">Sin registros</span>`}
-        </div>
-        ${hasData && (m.inv>0||m.lay>0) ? `<div style="display:flex;gap:8px;padding-left:0px"><span style="font-size:10px;color:#f4c55a">📈 Inv S/${fmt(m.inv)}</span><span style="font-size:10px;color:#37D1BF">🫧 Lay S/${fmt(m.lay)}</span></div>` : ""}
-      </div>`;
-  }).join("");
-
-  el.innerHTML = `
-    <!-- ANNUAL SUMMARY HERO -->
-    <div class="dash-hero" style="margin-bottom:12px">
-      <div class="dash-month-label">Resumen anual · Todos los meses</div>
-      <div class="dash-balance ${totBal>=0?"positive":"negative"}">S/${fmt(Math.abs(totBal))}</div>
-      <div class="dash-sub">${totBal>=0?"Superávit anual 🟢":"Déficit anual 🔴"} ${totIng>0?"· Ahorro: "+((totBal/totIng)*100).toFixed(1)+"%":""}</div>
-    </div>
-
-    <!-- ANNUAL KPIs -->
-    <div class="kpi-grid">
-      <div class="kpi income"><div class="kpi-label">💵 Ingresos totales</div><div class="kpi-val">S/${fmt(totIng)}</div></div>
-      <div class="kpi expense"><div class="kpi-label">💸 Egresos totales</div><div class="kpi-val">S/${fmt(totExp)}</div></div>
-    </div>
-    <div class="kpi-grid">
-      <div class="kpi invest"><div class="kpi-label">📈 Inversiones</div><div class="kpi-val">S/${fmt(totInv)}</div></div>
-      <div class="kpi layclean-kpi"><div class="kpi-label">🫧 Layclean</div><div class="kpi-val">S/${fmt(totLay)}</div></div>
-    </div>
-
-    <!-- BEST/WORST -->
-    ${bestMonth || worstMonth ? `
-    <div class="kpi-grid">
-      ${bestMonth ? `<div class="kpi" style="background:linear-gradient(135deg,#041f1e,#041f1e);border:1px solid #37D1BF25"><div class="kpi-label" style="color:#37D1BF">🏆 Mejor mes</div><div class="kpi-val" style="color:#a0f0ea;font-size:15px">${bestMonth.month}</div><div class="kpi-sub">S/${fmt(bestMonth.bal)} balance</div></div>` : ""}
-      ${worstMonth ? `<div class="kpi" style="background:linear-gradient(135deg,#1a0008,#1a0808);border:1px solid #ff6b6b25"><div class="kpi-label" style="color:#ff6b6b">📉 Más gasto</div><div class="kpi-val" style="color:#ff9999;font-size:15px">${worstMonth.month}</div><div class="kpi-sub">S/${fmt(worstMonth.total)} salidas</div></div>` : ""}
-    </div>` : ""}
-
-    <!-- MONTH BY MONTH -->
-    <div class="card">
-      <p class="sec-title">Comparación mes a mes</p>
-      <div style="display:flex;gap:16px;margin-bottom:10px;font-size:10px;color:#8b949e">
-        <span>🟢 Ingresos</span><span>🔴 Salidas</span><span style="color:#a0f0ea">▲ Balance positivo</span><span style="color:#ff6b6b">▼ Balance negativo</span>
-      </div>
-      ${monthRows}
-    </div>`;
-}
-
-
-// ── MICROPHONE / SPEECH RECOGNITION ──────────────────────────────────────────
-const ALL_CATEGORIES = [
-  // Egresos
-  {name:"Colegio",type:"Fijo",keys:["colegio","escuela","mensualidad"]},
-  {name:"Dominios / hosting",type:"Fijo",keys:["dominio","hosting","web"]},
-  {name:"Suscripciones",type:"Fijo",keys:["suscripcion","netflix","spotify","amazon","disney"]},
-  {name:"Luz",type:"Fijo",keys:["luz","electricidad","enel","hidrandina"]},
-  {name:"Agua",type:"Fijo",keys:["agua","sedapal"]},
-  {name:"Celulares",type:"Fijo",keys:["celular","telefono","movistar","claro","entel","bitel"]},
-  {name:"Internet",type:"Fijo",keys:["internet","wifi","fibra"]},
-  {name:"Alquiler / hipoteca",type:"Fijo",keys:["alquiler","hipoteca","renta","arriendo"]},
-  {name:"Seguro de salud",type:"Fijo",keys:["seguro salud","essalud","rimac","pacifico","salud"]},
-  {name:"Seguro vehicular",type:"Fijo",keys:["seguro vehicular","seguro auto","seguro carro"]},
-  {name:"Seguro de vida",type:"Fijo",keys:["seguro vida","vida"]},
-  {name:"SOAT",type:"Fijo",keys:["soat"]},
-  {name:"Intereses tarjeta de crédito",type:"Fijo",keys:["interes","tarjeta","credito"]},
-  {name:"Seguro de desgravamen",type:"Fijo",keys:["desgravamen"]},
-  {name:"Comisiones bancarias",type:"Fijo",keys:["comision","banco","bancaria"]},
-  {name:"Cuota préstamo personal",type:"Fijo",keys:["cuota","prestamo","credito personal"]},
-  {name:"Comida y restaurantes",type:"Variable",keys:["comida","restaurante","almuerzo","cena","desayuno","polleria","chifa","cevicheria"]},
-  {name:"Supermercado",type:"Variable",keys:["supermercado","plaza vea","wong","tottus","metro","vivanda","market"]},
-  {name:"Combustible",type:"Variable",keys:["combustible","gasolina","gasolinera","grifo","petroleo"]},
-  {name:"Transporte / taxi",type:"Variable",keys:["taxi","uber","cabify","transporte","bus","micro","combi","metro","tren"]},
-  {name:"Compras para la casa",type:"Variable",keys:["casa","hogar","mueble","electrodomestico","cocina"]},
-  {name:"Vestimenta",type:"Variable",keys:["ropa","zapatos","zapatillas","vestimenta","polo","pantalon","vestido"]},
-  {name:"Salud y farmacia",type:"Variable",keys:["farmacia","medicina","medicamento","doctor","medico","clinica","hospital","consulta"]},
-  {name:"Educación / cursos",type:"Variable",keys:["curso","educacion","libro","universidad","instituto","capacitacion"]},
-  {name:"Mantenimiento vehículo",type:"Variable",keys:["mantenimiento","mecanico","llanta","aceite","revision"]},
-  {name:"Veterinaria",type:"Variable",keys:["veterinaria","veterinario","vet"]},
-  {name:"Baño y peluquería mascota",type:"Variable",keys:["baño mascota","peluqueria mascota","grooming","corte mascota"]},
-  {name:"Alimento mascotas",type:"Variable",keys:["alimento mascota","comida perro","comida gato","croquetas","pedigree"]},
-  {name:"Accesorios mascotas",type:"Variable",keys:["accesorio mascota","correa","juguete mascota"]},
-  {name:"Acciones / Hapi",type:"Inversion",keys:["accion","hapi","bolsa","inversion","invertir"]},
-  {name:"Criptomonedas",type:"Inversion",keys:["cripto","bitcoin","ethereum","crypto"]},
-  {name:"Fondos de inversión",type:"Inversion",keys:["fondo","fondo mutuo"]},
-  {name:"Depósito a plazo fijo",type:"Inversion",keys:["plazo fijo","deposito","daf"]},
-  {name:"Entretenimiento",type:"Hormiga",keys:["entretenimiento","cine","teatro","concierto","juego"]},
-  {name:"Snacks / cafés",type:"Hormiga",keys:["cafe","snack","starbucks","cafeteria","dulce","helado"]},
-  {name:"Delivery",type:"Hormiga",keys:["delivery","rappi","pedidos ya","glovo","ifood"]},
-  {name:"Propinas",type:"Hormiga",keys:["propina","tip"]},
-  {name:"Otros pequeños",type:"Hormiga",keys:["otro","varios","miscelaneo","pequeño"]},
-  // Ingresos
-  {name:"Sueldo / salario",type:"Ingreso",keys:["sueldo","salario","pago","remuneracion","planilla"]},
-  {name:"RHE - Recibo por Honorarios",type:"Ingreso",keys:["rhe","recibo honorario","honorario electronico","recibo"]},
-  {name:"Honorarios / freelance",type:"Ingreso",keys:["freelance","honorario","servicio","proyecto"]},
-  {name:"Horas extras",type:"Ingreso",keys:["hora extra","extra","sobretiempo"]},
-  {name:"Bono / comisión",type:"Ingreso",keys:["bono","comision","premio","incentivo"]},
-  {name:"Ventas Layclean",type:"Ingreso",keys:["venta layclean","layclean","venta producto"]},
-  {name:"Dividendos / acciones",type:"Ingreso",keys:["dividendo","rendimiento accion"]},
-  {name:"Intereses / rendimientos",type:"Ingreso",keys:["interes ganado","rendimiento","retorno"]},
-  {name:"Otros ingresos",type:"Ingreso",keys:["otro ingreso","ingreso extra","dinero recibido"]},
-  // Layclean
-  {name:"Insumos / materias primas",type:"Negocio",keys:["insumo","materia prima","quimico","fragancia","base"]},
-  {name:"Packaging - etiquetas",type:"Negocio",keys:["etiqueta","label","sticker"]},
-  {name:"Packaging - botellas y tapas",type:"Negocio",keys:["botella","tapa","envase","frasco"]},
-  {name:"Packaging - cajas",type:"Negocio",keys:["caja","carton","empaque"]},
-  {name:"Equipos y herramientas",type:"Negocio",keys:["equipo","herramienta","maquina","instrumento"]},
-  {name:"Pago a proveedores",type:"Negocio",keys:["proveedor","pago proveedor","abastecedor"]},
-  {name:"Importaciones",type:"Negocio",keys:["importacion","importar","aduana","flete"]},
-  {name:"Alquiler de local",type:"Negocio",keys:["local","alquiler local","taller","almacen"]},
-  {name:"Pago de planilla",type:"Negocio",keys:["planilla","trabajador","empleado","personal","colaborador"]},
-  {name:"Publicidad y marketing",type:"Negocio",keys:["publicidad","marketing","redes","facebook","instagram","anuncio","pauta"]},
-  {name:"Transporte y delivery",type:"Negocio",keys:["delivery negocio","envio","transporte negocio","courier","olva","shalom"]},
-  {name:"Contadora / contabilidad",type:"Negocio",keys:["contadora","contabilidad","contador","sunat","declaracion"]},
-  {name:"Registro de marca / trámites",type:"Negocio",keys:["indecopi","marca","tramite","registro","patente"]},
-  {name:"Software de facturación",type:"Negocio",keys:["facturacion","factura","boleta","comprobante","nubefact"]},
-  {name:"Otros gastos del negocio",type:"Negocio",keys:["otro negocio","gasto negocio","miscelaneo negocio"]},
-];
-
-const WORD_NUMBERS = {
-  "cero":0,"un":1,"uno":1,"una":1,"dos":2,"tres":3,"cuatro":4,"cinco":5,"seis":6,"siete":7,"ocho":8,"nueve":9,
-  "diez":10,"once":11,"doce":12,"trece":13,"catorce":14,"quince":15,"dieciseis":16,"diecisiete":17,"dieciocho":18,"diecinueve":19,
-  "veinte":20,"veintiuno":21,"veintidos":22,"veintitres":23,"veinticuatro":24,"veinticinco":25,"veintiseis":26,"veintisiete":27,"veintiocho":28,"veintinueve":29,
-  "treinta":30,"cuarenta":40,"cincuenta":50,"sesenta":60,"setenta":70,"ochenta":80,"noventa":90,
-  "cien":100,"ciento":100,"doscientos":200,"doscientas":200,"trescientos":300,"trescientas":300,
-  "cuatrocientos":400,"cuatrocientas":400,"quinientos":500,"quinientas":500,"seiscientos":600,"seiscientas":600,
-  "setecientos":700,"setecientas":700,"ochocientos":800,"ochocientas":800,"novecientos":900,"novecientas":900,
-  "mil":1000,"dos mil":2000,"tres mil":3000,"cuatro mil":4000,"cinco mil":5000,
-  "diez mil":10000,"veinte mil":20000,"treinta mil":30000,"cincuenta mil":50000,"cien mil":100000
-};
-
-function wordsToNumber(text) {
-  // Check multi-word first
-  for (const [word, val] of Object.entries(WORD_NUMBERS).sort((a,b) => b[0].length - a[0].length)) {
-    if (text.includes(word)) {
-      // Handle "ciento X" = 100 + X
-      const regex = new RegExp(word + "\\s*(\\w+)?", "g");
-      text = text.replace(regex, (match, next) => {
-        if (word === "ciento" && next && WORD_NUMBERS[next]) {
-          return String(100 + WORD_NUMBERS[next]);
-        }
-        return String(val);
-      });
+  let monthRows = "";
+  monthData.forEach(function(m) {
+    const hasData = m.ing>0||m.total>0;
+    const balColor = m.bal>0?"#58ffb4":m.bal<0?"#ff6b6b":"#8b949e";
+    const ingW = Math.min((m.ing/maxVal)*100,100);
+    const expW = Math.min((m.total/maxVal)*100,100);
+    let row = '<div style="padding:10px 0;border-bottom:1px solid #1c2333">';
+    row += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">';
+    row += '<span style="font-size:13px;font-weight:700;min-width:90px">'+m.month.substring(0,3)+'</span>';
+    if(hasData) {
+      row += '<div style="flex:1;margin:0 10px">';
+      row += '<div style="display:flex;gap:2px;height:6px;border-radius:3px;overflow:hidden;margin-bottom:2px"><div style="width:'+ingW+'%;background:linear-gradient(90deg,#00c97a,#58ffb4);border-radius:3px"></div></div>';
+      row += '<div style="display:flex;gap:2px;height:6px;border-radius:3px;overflow:hidden"><div style="width:'+expW+'%;background:linear-gradient(90deg,#c0392b,#ff6b6b);border-radius:3px"></div></div>';
+      row += '</div>';
+      row += '<div style="text-align:right;min-width:90px">';
+      row += '<div style="font-size:12px;font-weight:700;color:'+balColor+'">S/'+fmt(Math.abs(m.bal))+' '+(m.bal>=0?"▲":"▼")+'</div>';
+      row += '<div style="font-size:10px;color:#8b949e">S/'+fmt(m.ing)+' in · S/'+fmt(m.total)+' out</div>';
+      row += '</div>';
+    } else {
+      row += '<span style="font-size:11px;color:#8b949e;flex:1;text-align:center">Sin registros</span>';
     }
+    row += '</div>';
+    if(hasData&&(m.inv>0||m.lay>0)) {
+      row += '<div style="display:flex;gap:8px">';
+      if(m.inv>0) row += '<span style="font-size:10px;color:#f4c55a">📈 Inv S/'+fmt(m.inv)+'</span>';
+      if(m.lay>0) row += '<span style="font-size:10px;color:#7dd4a0">🫧 Lay S/'+fmt(m.lay)+'</span>';
+      row += '</div>';
+    }
+    row += '</div>';
+    monthRows += row;
+  });
+
+  let html = "";
+  html += '<div class="dash-hero" style="margin-bottom:12px">';
+  html += '<div class="dash-month-label">Resumen anual · Todos los meses</div>';
+  html += '<div class="dash-balance '+(totBal>=0?"positive":"negative")+'">S/'+fmt(Math.abs(totBal))+'</div>';
+  html += '<div class="dash-sub">'+(totBal>=0?"Superávit anual 🟢":"Déficit anual 🔴")+(totIng>0?" · Ahorro: "+((totBal/totIng)*100).toFixed(1)+"%":"")+'</div>';
+  html += '</div>';
+
+  html += '<div class="kpi-grid">';
+  html += '<div class="kpi income"><div class="kpi-label">💵 Ingresos totales</div><div class="kpi-val">S/'+fmt(totIng)+'</div></div>';
+  html += '<div class="kpi expense"><div class="kpi-label">💸 Egresos totales</div><div class="kpi-val">S/'+fmt(totExp)+'</div></div>';
+  html += '</div>';
+  html += '<div class="kpi-grid">';
+  html += '<div class="kpi invest"><div class="kpi-label">📈 Inversiones</div><div class="kpi-val">S/'+fmt(totInv)+'</div></div>';
+  html += '<div class="kpi layclean-kpi"><div class="kpi-label">🫧 Layclean</div><div class="kpi-val">S/'+fmt(totLay)+'</div></div>';
+  html += '</div>';
+
+  if(bestMonth||worstMonth) {
+    html += '<div class="kpi-grid">';
+    if(bestMonth) html += '<div class="kpi" style="background:linear-gradient(135deg,#001a0a,#051a0a);border:1px solid #00c97a25"><div class="kpi-label" style="color:#00c97a">🏆 Mejor mes</div><div class="kpi-val" style="color:#58ffb4;font-size:15px">'+bestMonth.month+'</div><div class="kpi-sub">S/'+fmt(bestMonth.bal)+' balance</div></div>';
+    if(worstMonth) html += '<div class="kpi" style="background:linear-gradient(135deg,#1a0008,#1a0808);border:1px solid #ff6b6b25"><div class="kpi-label" style="color:#ff6b6b">📉 Más gasto</div><div class="kpi-val" style="color:#ff9999;font-size:15px">'+worstMonth.month+'</div><div class="kpi-sub">S/'+fmt(worstMonth.total)+' salidas</div></div>';
+    html += '</div>';
   }
-  // Try to find numeric value in modified text
-  const nums = text.match(/\d+(\.\d+)?/g);
-  if (nums) return parseFloat(nums.join(""));
-  return null;
-}
 
-function detectCurrency(text) {
-  if (text.includes("dolar") || text.includes("usd") || text.includes("verde")) return "USD";
-  return "PEN";
-}
+  html += '<div class="card"><p class="sec-title">Comparación mes a mes</p>';
+  html += '<div style="display:flex;gap:16px;margin-bottom:10px;font-size:10px;color:#8b949e"><span>🟢 Ingresos</span><span>🔴 Salidas</span></div>';
+  html += monthRows;
+  html += '</div>';
 
-function detectCategory(text, section) {
-  const lower = text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-  let best = null, bestScore = 0;
-  const typeFilter = section === "ingreso" ? ["Ingreso"] : section === "layclean" ? ["Negocio"] : ["Fijo","Variable","Hormiga","Inversion"];
-  for (const cat of ALL_CATEGORIES) {
-    if (!typeFilter.includes(cat.type)) continue;
-    for (const key of cat.keys) {
-      const k = key.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-      if (lower.includes(k) && k.length > bestScore) {
-        best = cat; bestScore = k.length;
-      }
-    }
-  }
-  return best;
-}
-
-function extractDescription(text, amount, category) {
-  let desc = text;
-  desc = desc.replace(/[0-9]+([.,][0-9]+)?/g, "");
-  Object.keys(WORD_NUMBERS).forEach(w => { try { desc = desc.replace(new RegExp(" "+w+" ","gi")," "); } catch(e){} });
-  desc = desc.replace(/soles?|sol|dolares?|dolar|pen|usd|verdes?/gi, "");
-  if (category) category.keys.forEach(k => { try { desc = desc.replace(new RegExp(k,"gi"),""); } catch(e){} });
-  desc = desc.replace(/  +/g," ").trim();
-  return desc || (category ? category.name : "Gasto");
-}
-
-function parseSpeech(transcript, section) {
-  const text = transcript.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
-  const amount = wordsToNumber(text);
-  const currency = detectCurrency(text);
-  const category = detectCategory(text, section);
-  const desc = extractDescription(transcript, amount, category);
-  return { desc, amount, currency, category };
-}
-
-function applyToForm(parsed, section) {
-  if (section === "egreso") {
-    if (parsed.desc) document.getElementById("f-desc").value = parsed.desc;
-    if (parsed.amount) document.getElementById("f-amount").value = parsed.amount;
-    document.getElementById("f-currency").value = parsed.currency;
-    if (parsed.category) {
-      const sel = document.getElementById("f-category");
-      for (let o of sel.options) {
-        if (o.value.startsWith(parsed.category.name+"|")) { sel.value = o.value; onCategoryChange(); break; }
-      }
-    }
-  } else if (section === "ingreso") {
-    if (parsed.desc) document.getElementById("i-desc").value = parsed.desc;
-    if (parsed.amount) document.getElementById("i-amount").value = parsed.amount;
-    document.getElementById("i-currency").value = parsed.currency;
-    if (parsed.category) {
-      const sel = document.getElementById("i-category");
-      for (let o of sel.options) {
-        if (o.value.startsWith(parsed.category.name+"|")) { sel.value = o.value; break; }
-      }
-    }
-  } else if (section === "layclean") {
-    if (parsed.desc) document.getElementById("l-desc").value = parsed.desc;
-    if (parsed.amount) document.getElementById("l-amount").value = parsed.amount;
-    document.getElementById("l-currency").value = parsed.currency;
-    if (parsed.category) {
-      const sel = document.getElementById("l-category");
-      for (let o of sel.options) {
-        if (o.value.startsWith(parsed.category.name+"|")) { sel.value = o.value; break; }
-      }
-    }
-  }
+  el.innerHTML = html;
 }
 
 let activeRecognition = null;
