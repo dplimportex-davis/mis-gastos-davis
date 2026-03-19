@@ -4,6 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="apple-mobile-web-app-title" content="Mis Gastos Davis"/>
 <meta name="theme-color" content="#0a0f1a"/>
@@ -1270,14 +1271,33 @@ function micNormalize(t) {
 }
 
 function micGetAmount(text) {
+  // First try direct number in text
   var n = text.match(/\d+([.,]\d+)?/);
   if (n) return parseFloat(n[0].replace(",","."));
+  // Try word numbers - normalize first
   var t = micNormalize(text);
+  // Try compound numbers first (e.g. "ciento veinte" = 120)
+  var total = 0;
+  var found = false;
+  var remaining = t;
   var keys = Object.keys(MIC_NUMS).sort(function(a,b){return b.length-a.length;});
   for (var i=0; i<keys.length; i++) {
-    if (t.indexOf(keys[i]) !== -1) return MIC_NUMS[keys[i]];
+    var k = keys[i];
+    if (remaining.indexOf(k) !== -1) {
+      var val = MIC_NUMS[k];
+      // Handle "mil" multiplier
+      if (k === "mil" && total > 0) {
+        total = total * 1000;
+      } else if (k === "mil") {
+        total = 1000;
+      } else {
+        total += val;
+      }
+      remaining = remaining.replace(k, " ");
+      found = true;
+    }
   }
-  return null;
+  return found ? total : null;
 }
 
 function micGetCategory(text, section) {
@@ -1297,12 +1317,33 @@ function micGetCategory(text, section) {
 
 function micGetDesc(original, amount, cat) {
   var d = original;
+  // Remove numbers
   d = d.replace(/\d+([.,]\d+)?/g,"");
-  d = d.replace(/soles?|sol|dolares?|dolar/gi,"");
+  // Remove currency words
+  d = d.replace(/\bsoles?\b|\bsol\b|\bdolares?\b|\bdolar\b/gi,"");
+  // Only remove the specific category keyword that matched, not all keys
   if (cat) {
+    // Remove only the matched key (shortest removal)
+    var t = micNormalize(original);
+    var matchedKey = "";
     for (var i=0; i<cat.keys.length; i++) {
-      try { d = d.replace(new RegExp(cat.keys[i],"gi"),""); } catch(e) {}
+      var k = micNormalize(cat.keys[i]);
+      if (t.indexOf(k) !== -1 && k.length > matchedKey.length) {
+        matchedKey = cat.keys[i];
+      }
     }
+    if (matchedKey) {
+      try { d = d.replace(new RegExp(matchedKey,"gi"),""); } catch(e) {}
+    }
+  }
+  // Remove number words
+  var numWords = ["cien","ciento","doscientos","doscientas","trescientos","trescientas",
+    "cuatrocientos","quinientos","quinientas","seiscientos","setecientos","ochocientos",
+    "novecientos","novecientas","mil","cero","un","uno","una","dos","tres","cuatro",
+    "cinco","seis","siete","ocho","nueve","diez","once","doce","trece","catorce",
+    "quince","veinte","treinta","cuarenta","cincuenta","sesenta","setenta","ochenta","noventa"];
+  for (var j=0; j<numWords.length; j++) {
+    try { d = d.replace(new RegExp("\\b"+numWords[j]+"\\b","gi")," "); } catch(e) {}
   }
   d = d.replace(/\s+/g," ").trim();
   return d || (cat ? cat.name : "Gasto");
@@ -1354,21 +1395,27 @@ function startMic(section) {
   r.onresult = function(e) {
     var t = e.results[0][0].transcript;
     activeRecognition = null;
+    // Fill form IMMEDIATELY before anything else
     var cur = t.toLowerCase().indexOf("dolar") !== -1 || t.toLowerCase().indexOf("usd") !== -1 ? "USD" : "PEN";
     var amt = micGetAmount(t);
     var cat = micGetCategory(t, section);
     var desc = micGetDesc(t, amt, cat);
     micApplyForm(desc, amt, cur, cat, section);
+    // Then update UI
     var label = section==="egreso"?"gasto":section==="ingreso"?"ingreso":"gasto Layclean";
-    var info = desc + (amt ? " | " + (cur==="USD"?"$":"S/") + amt : "") + (cat ? " | " + cat.name : " | elige categoria");
+    var info = "✅ " + desc;
+    if (amt) info += " | " + (cur==="USD"?"$":"S/") + amt;
+    info += cat ? " | " + cat.name : " | ⚠️ elige categoría";
+    res.className = "mic-result show";
     res.textContent = info;
     btn.className = "mic-btn success";
-    btn.innerHTML = "Listo";
+    btn.innerHTML = "✅ Listo — revisa y confirma";
+    // Keep result visible for 8 seconds
     setTimeout(function() {
       btn.className = "mic-btn";
-      btn.innerHTML = "Dictar " + label;
+      btn.innerHTML = "🎙️ Dictar " + label;
       res.className = "mic-result";
-    }, 4000);
+    }, 8000);
   };
   r.onerror = function(e) {
     activeRecognition = null;
@@ -1455,14 +1502,33 @@ function micNormalize(t) {
 }
 
 function micGetAmount(text) {
+  // First try direct number in text
   var n = text.match(/\d+([.,]\d+)?/);
   if (n) return parseFloat(n[0].replace(",","."));
+  // Try word numbers - normalize first
   var t = micNormalize(text);
+  // Try compound numbers first (e.g. "ciento veinte" = 120)
+  var total = 0;
+  var found = false;
+  var remaining = t;
   var keys = Object.keys(MIC_NUMS).sort(function(a,b){return b.length-a.length;});
   for (var i=0; i<keys.length; i++) {
-    if (t.indexOf(keys[i]) !== -1) return MIC_NUMS[keys[i]];
+    var k = keys[i];
+    if (remaining.indexOf(k) !== -1) {
+      var val = MIC_NUMS[k];
+      // Handle "mil" multiplier
+      if (k === "mil" && total > 0) {
+        total = total * 1000;
+      } else if (k === "mil") {
+        total = 1000;
+      } else {
+        total += val;
+      }
+      remaining = remaining.replace(k, " ");
+      found = true;
+    }
   }
-  return null;
+  return found ? total : null;
 }
 
 function micGetCategory(text, section) {
@@ -1482,12 +1548,33 @@ function micGetCategory(text, section) {
 
 function micGetDesc(original, amount, cat) {
   var d = original;
+  // Remove numbers
   d = d.replace(/\d+([.,]\d+)?/g,"");
-  d = d.replace(/soles?|sol|dolares?|dolar/gi,"");
+  // Remove currency words
+  d = d.replace(/\bsoles?\b|\bsol\b|\bdolares?\b|\bdolar\b/gi,"");
+  // Only remove the specific category keyword that matched, not all keys
   if (cat) {
+    // Remove only the matched key (shortest removal)
+    var t = micNormalize(original);
+    var matchedKey = "";
     for (var i=0; i<cat.keys.length; i++) {
-      try { d = d.replace(new RegExp(cat.keys[i],"gi"),""); } catch(e) {}
+      var k = micNormalize(cat.keys[i]);
+      if (t.indexOf(k) !== -1 && k.length > matchedKey.length) {
+        matchedKey = cat.keys[i];
+      }
     }
+    if (matchedKey) {
+      try { d = d.replace(new RegExp(matchedKey,"gi"),""); } catch(e) {}
+    }
+  }
+  // Remove number words
+  var numWords = ["cien","ciento","doscientos","doscientas","trescientos","trescientas",
+    "cuatrocientos","quinientos","quinientas","seiscientos","setecientos","ochocientos",
+    "novecientos","novecientas","mil","cero","un","uno","una","dos","tres","cuatro",
+    "cinco","seis","siete","ocho","nueve","diez","once","doce","trece","catorce",
+    "quince","veinte","treinta","cuarenta","cincuenta","sesenta","setenta","ochenta","noventa"];
+  for (var j=0; j<numWords.length; j++) {
+    try { d = d.replace(new RegExp("\\b"+numWords[j]+"\\b","gi")," "); } catch(e) {}
   }
   d = d.replace(/\s+/g," ").trim();
   return d || (cat ? cat.name : "Gasto");
@@ -1539,21 +1626,27 @@ function startMic(section) {
   r.onresult = function(e) {
     var t = e.results[0][0].transcript;
     activeRecognition = null;
+    // Fill form IMMEDIATELY before anything else
     var cur = t.toLowerCase().indexOf("dolar") !== -1 || t.toLowerCase().indexOf("usd") !== -1 ? "USD" : "PEN";
     var amt = micGetAmount(t);
     var cat = micGetCategory(t, section);
     var desc = micGetDesc(t, amt, cat);
     micApplyForm(desc, amt, cur, cat, section);
+    // Then update UI
     var label = section==="egreso"?"gasto":section==="ingreso"?"ingreso":"gasto Layclean";
-    var info = desc + (amt ? " | " + (cur==="USD"?"$":"S/") + amt : "") + (cat ? " | " + cat.name : " | elige categoria");
+    var info = "✅ " + desc;
+    if (amt) info += " | " + (cur==="USD"?"$":"S/") + amt;
+    info += cat ? " | " + cat.name : " | ⚠️ elige categoría";
+    res.className = "mic-result show";
     res.textContent = info;
     btn.className = "mic-btn success";
-    btn.innerHTML = "Listo";
+    btn.innerHTML = "✅ Listo — revisa y confirma";
+    // Keep result visible for 8 seconds
     setTimeout(function() {
       btn.className = "mic-btn";
-      btn.innerHTML = "Dictar " + label;
+      btn.innerHTML = "🎙️ Dictar " + label;
       res.className = "mic-result";
-    }, 4000);
+    }, 8000);
   };
   r.onerror = function(e) {
     activeRecognition = null;
