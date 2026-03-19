@@ -1274,7 +1274,7 @@ function applyToForm(parsed, section) {
 }
 
 function parseSpeech(transcript, section) {
-  const text = transcript.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
+  const text = transcript.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
   const amount = wordsToNumber(text);
   const currency = detectCurrency(text);
   const category = detectCategory(text, section);
@@ -1288,14 +1288,14 @@ function detectCurrency(text) {
 }
 
 function detectCategory(text, section) {
-  const lower = text.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+  const lower = text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   let best = null, bestScore = 0;
   const typeFilter = section === "ingreso" ? ["Ingreso"] : section === "layclean" ? ["Negocio"] : ["Fijo","Variable","Hormiga","Inversion"];
   for (let i = 0; i < ALL_CATEGORIES.length; i++) {
     const cat = ALL_CATEGORIES[i];
     if (typeFilter.indexOf(cat.type) === -1) continue;
     for (let j = 0; j < cat.keys.length; j++) {
-      const k = cat.keys[j].normalize("NFD").replace(/[̀-ͯ]/g, "");
+      const k = cat.keys[j].normalize("NFD").replace(/[\u0300-\u036f]/g, "");
       if (lower.indexOf(k) !== -1 && k.length > bestScore) {
         best = cat; bestScore = k.length;
       }
@@ -1332,7 +1332,7 @@ function startMic(section) {
     const transcript = e.results[0][0].transcript;
     btn.className = "mic-btn processing";
     btn.innerHTML = "⏳ Procesando...";
-    resultEl.textContent = "📝 Escuché: "" + transcript + """;
+    resultEl.textContent = '📝 Escuché: ' + transcript;
 
     setTimeout(() => {
       const parsed = parseSpeech(transcript, section);
