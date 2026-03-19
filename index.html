@@ -1321,6 +1321,7 @@ function startMic(section) {
   recognition.lang = "es-PE";
   recognition.continuous = false;
   recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
   activeRecognition = recognition;
 
   btn.className = "mic-btn listening";
@@ -1334,25 +1335,31 @@ function startMic(section) {
     btn.innerHTML = "⏳ Procesando...";
     resultEl.textContent = '📝 Escuché: ' + transcript;
 
-    setTimeout(() => {
+        try {
       const parsed = parseSpeech(transcript, section);
       applyToForm(parsed, section);
 
       let summary = "";
-      if (parsed.desc) summary += "✅ Descripción: " + parsed.desc + "\n";
-      if (parsed.amount) summary += "✅ Monto: " + (parsed.currency==="USD"?"$":"S/") + parsed.amount + "\n";
-      if (parsed.category) summary += "✅ Categoría: " + parsed.category.name;
-      else summary += "⚠️ Categoría no detectada — selecciónala manualmente";
+      if (parsed.desc) summary += "✅ " + parsed.desc;
+      if (parsed.amount) summary += " | " + (parsed.currency==="USD"?"$":"S/") + parsed.amount;
+      if (parsed.category) summary += " | " + parsed.category.name;
+      else summary += " | ⚠️ Elige categoría";
 
       resultEl.textContent = summary;
       btn.className = "mic-btn success";
       btn.innerHTML = "✅ Listo — revisa y confirma";
       activeRecognition = null;
-      setTimeout(() => {
+      setTimeout(function() {
         btn.className = "mic-btn";
         btn.innerHTML = "🎙️ Dictar " + (section==="egreso"?"gasto":section==="ingreso"?"ingreso":"gasto Layclean");
-      }, 4000);
-    }, 300);
+        resultEl.className = "mic-result";
+      }, 5000);
+    } catch(err) {
+      btn.className = "mic-btn";
+      btn.innerHTML = "🎙️ Dictar gasto";
+      resultEl.textContent = "❌ Error al procesar. Intenta de nuevo.";
+      activeRecognition = null;
+    }
   };
 
   recognition.onerror = (e) => {
@@ -1371,6 +1378,12 @@ function startMic(section) {
   };
 
   recognition.start();
+  // Auto-stop after 8 seconds
+  setTimeout(function() {
+    if (activeRecognition) {
+      activeRecognition.stop();
+    }
+  }, 8000);
 }
 
 init();
