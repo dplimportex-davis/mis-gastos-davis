@@ -408,7 +408,7 @@ input,select,button,textarea{font-family:inherit}
     </div>
     <button class="mic-btn" id="mic-btn-egreso" onclick="startMic('egreso')">🎙️ Dictar gasto</button>
     <div class="mic-result" id="mic-result-egreso"></div>
-    <p class="mic-tip">Ej: <em>"Almuerzo familiar ciento veinte soles comida"</em></p>
+    <p class="mic-tip">Di solo: descripción y monto. Ej: <em>"Almuerzo familiar ciento veinte"</em> o <em>"gasolina doscientos"</em></p>
     <button class="btn-primary btn-blue" onclick="addExpense()">+ Registrar Gasto Personal</button>
   </div>
   <div class="card" id="recent-card" style="display:none">
@@ -478,7 +478,7 @@ input,select,button,textarea{font-family:inherit}
     </div>
     <button class="mic-btn" id="mic-btn-ingreso" onclick="startMic('ingreso')">🎙️ Dictar ingreso</button>
     <div class="mic-result" id="mic-result-ingreso"></div>
-    <p class="mic-tip">Ej: <em>"Sueldo tres mil quinientos soles sueldo"</em></p>
+    <p class="mic-tip">Di solo: descripción y monto. Ej: <em>"Sueldo tres mil quinientos"</em></p>
     <button class="btn-primary btn-green" onclick="addIngreso()">+ Registrar Ingreso</button>
   </div>
   <div class="filter-row">
@@ -587,7 +587,7 @@ input,select,button,textarea{font-family:inherit}
     </div>
     <button class="mic-btn" id="mic-btn-layclean" onclick="startMic('layclean')">🎙️ Dictar gasto Layclean</button>
     <div class="mic-result" id="mic-result-layclean"></div>
-    <p class="mic-tip">Ej: <em>"Etiquetas doscientos soles packaging"</em></p>
+    <p class="mic-tip">Di solo: descripción y monto. Ej: <em>"Etiquetas doscientos"</em></p>
     <button class="btn-primary btn-layclean" onclick="addLayclean()">+ Registrar Gasto Layclean</button>
   </div>
   <div class="filter-row">
@@ -1383,7 +1383,7 @@ function startMic(section) {
     return;
   }
   var r = new SR();
-  r.lang = "es-PE";
+  r.lang = "es-419";
   r.continuous = false;
   r.interimResults = false;
   r.maxAlternatives = 1;
@@ -1614,7 +1614,7 @@ function startMic(section) {
     return;
   }
   var r = new SR();
-  r.lang = "es-PE";
+  r.lang = "es-419";
   r.continuous = false;
   r.interimResults = false;
   r.maxAlternatives = 1;
