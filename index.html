@@ -1317,36 +1317,49 @@ function micGetCategory(text, section) {
 
 function micGetDesc(original, amount, cat) {
   var d = original;
-  // Remove numbers
-  d = d.replace(/\d+([.,]\d+)?/g,"");
+  // Remove numeric digits
+  d = d.replace(/\d+([.,]\d+)?/g, "");
   // Remove currency words
-  d = d.replace(/\bsoles?\b|\bsol\b|\bdolares?\b|\bdolar\b/gi,"");
-  // Only remove the specific category keyword that matched, not all keys
-  if (cat) {
-    // Remove only the matched key (shortest removal)
-    var t = micNormalize(original);
-    var matchedKey = "";
-    for (var i=0; i<cat.keys.length; i++) {
-      var k = micNormalize(cat.keys[i]);
-      if (t.indexOf(k) !== -1 && k.length > matchedKey.length) {
-        matchedKey = cat.keys[i];
-      }
-    }
-    if (matchedKey) {
-      try { d = d.replace(new RegExp(matchedKey,"gi"),""); } catch(e) {}
-    }
-  }
+  d = d.replace(/soles?|sol|dolares?|dolar/gi, "");
   // Remove number words
   var numWords = ["cien","ciento","doscientos","doscientas","trescientos","trescientas",
     "cuatrocientos","quinientos","quinientas","seiscientos","setecientos","ochocientos",
-    "novecientos","novecientas","mil","cero","un","uno","una","dos","tres","cuatro",
-    "cinco","seis","siete","ocho","nueve","diez","once","doce","trece","catorce",
-    "quince","veinte","treinta","cuarenta","cincuenta","sesenta","setenta","ochenta","noventa"];
-  for (var j=0; j<numWords.length; j++) {
-    try { d = d.replace(new RegExp("\\b"+numWords[j]+"\\b","gi")," "); } catch(e) {}
+    "novecientos","novecientas","mil","dos mil","tres mil","cuatro mil","cinco mil",
+    "cero","veinte","treinta","cuarenta","cincuenta","sesenta","setenta","ochenta","noventa",
+    "veintiuno","veintidos","veintitres","veinticuatro","veinticinco","veintiseis",
+    "veintisiete","veintiocho","veintinueve",
+    "diez","once","doce","trece","catorce","quince"];
+  for (var j = 0; j < numWords.length; j++) {
+    d = d.replace(new RegExp("\b" + numWords[j] + "\b", "gi"), " ");
   }
-  d = d.replace(/\s+/g," ").trim();
-  return d || (cat ? cat.name : "Gasto");
+  // Remove ONLY the exact category keyword that was detected
+  // BUT only if it appears at the END of the phrase (user said it to indicate category)
+  if (cat) {
+    var normalized = micNormalize(d);
+    var matchedKey = "";
+    var matchedPos = -1;
+    for (var i = 0; i < cat.keys.length; i++) {
+      var k = micNormalize(cat.keys[i]);
+      var pos = normalized.lastIndexOf(k); // lastIndexOf = likely said at end
+      if (pos !== -1 && k.length > matchedKey.length) {
+        matchedKey = cat.keys[i];
+        matchedPos = pos;
+      }
+    }
+    // Only remove if keyword appears at the end (last 40% of string)
+    if (matchedKey && matchedPos > d.length * 0.5) {
+      d = d.substring(0, matchedPos).trim();
+    }
+  }
+  d = d.replace(/\s+/g, " ").trim();
+  // If description is empty or too short, use what was said without modifications
+  if (d.length < 2) {
+    // Fallback: just remove numbers and currency from original
+    d = original.replace(/\d+([.,]\d+)?/g, "")
+                .replace(/soles?|sol|dolares?|dolar/gi, "")
+                .replace(/\s+/g, " ").trim();
+  }
+  return d || original;
 }
 
 function micApplyForm(desc, amount, currency, cat, section) {
@@ -1548,36 +1561,49 @@ function micGetCategory(text, section) {
 
 function micGetDesc(original, amount, cat) {
   var d = original;
-  // Remove numbers
-  d = d.replace(/\d+([.,]\d+)?/g,"");
+  // Remove numeric digits
+  d = d.replace(/\d+([.,]\d+)?/g, "");
   // Remove currency words
-  d = d.replace(/\bsoles?\b|\bsol\b|\bdolares?\b|\bdolar\b/gi,"");
-  // Only remove the specific category keyword that matched, not all keys
-  if (cat) {
-    // Remove only the matched key (shortest removal)
-    var t = micNormalize(original);
-    var matchedKey = "";
-    for (var i=0; i<cat.keys.length; i++) {
-      var k = micNormalize(cat.keys[i]);
-      if (t.indexOf(k) !== -1 && k.length > matchedKey.length) {
-        matchedKey = cat.keys[i];
-      }
-    }
-    if (matchedKey) {
-      try { d = d.replace(new RegExp(matchedKey,"gi"),""); } catch(e) {}
-    }
-  }
+  d = d.replace(/soles?|sol|dolares?|dolar/gi, "");
   // Remove number words
   var numWords = ["cien","ciento","doscientos","doscientas","trescientos","trescientas",
     "cuatrocientos","quinientos","quinientas","seiscientos","setecientos","ochocientos",
-    "novecientos","novecientas","mil","cero","un","uno","una","dos","tres","cuatro",
-    "cinco","seis","siete","ocho","nueve","diez","once","doce","trece","catorce",
-    "quince","veinte","treinta","cuarenta","cincuenta","sesenta","setenta","ochenta","noventa"];
-  for (var j=0; j<numWords.length; j++) {
-    try { d = d.replace(new RegExp("\\b"+numWords[j]+"\\b","gi")," "); } catch(e) {}
+    "novecientos","novecientas","mil","dos mil","tres mil","cuatro mil","cinco mil",
+    "cero","veinte","treinta","cuarenta","cincuenta","sesenta","setenta","ochenta","noventa",
+    "veintiuno","veintidos","veintitres","veinticuatro","veinticinco","veintiseis",
+    "veintisiete","veintiocho","veintinueve",
+    "diez","once","doce","trece","catorce","quince"];
+  for (var j = 0; j < numWords.length; j++) {
+    d = d.replace(new RegExp("\b" + numWords[j] + "\b", "gi"), " ");
   }
-  d = d.replace(/\s+/g," ").trim();
-  return d || (cat ? cat.name : "Gasto");
+  // Remove ONLY the exact category keyword that was detected
+  // BUT only if it appears at the END of the phrase (user said it to indicate category)
+  if (cat) {
+    var normalized = micNormalize(d);
+    var matchedKey = "";
+    var matchedPos = -1;
+    for (var i = 0; i < cat.keys.length; i++) {
+      var k = micNormalize(cat.keys[i]);
+      var pos = normalized.lastIndexOf(k); // lastIndexOf = likely said at end
+      if (pos !== -1 && k.length > matchedKey.length) {
+        matchedKey = cat.keys[i];
+        matchedPos = pos;
+      }
+    }
+    // Only remove if keyword appears at the end (last 40% of string)
+    if (matchedKey && matchedPos > d.length * 0.5) {
+      d = d.substring(0, matchedPos).trim();
+    }
+  }
+  d = d.replace(/\s+/g, " ").trim();
+  // If description is empty or too short, use what was said without modifications
+  if (d.length < 2) {
+    // Fallback: just remove numbers and currency from original
+    d = original.replace(/\d+([.,]\d+)?/g, "")
+                .replace(/soles?|sol|dolares?|dolar/gi, "")
+                .replace(/\s+/g, " ").trim();
+  }
+  return d || original;
 }
 
 function micApplyForm(desc, amount, currency, cat, section) {
