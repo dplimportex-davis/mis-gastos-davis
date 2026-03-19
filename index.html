@@ -284,6 +284,7 @@ input,select,button,textarea{font-family:inherit}
     <button class="tab active" onclick="showTab('registro')" id="tab-registro">💸 Egresos</button>
     <button class="tab" onclick="showTab('historial')" id="tab-historial">📋 Historial</button>
     <button class="tab t-layclean" onclick="showTab('layclean')" id="tab-layclean">🫧 Layclean</button>
+    <button class="tab t-layclean" onclick="showTab('layclean-ing')" id="tab-layclean-ing">💚 Ventas</button>
     <button class="tab t-ingresos" onclick="showTab('ingresos')" id="tab-ingresos">💵 Ingresos</button>
     <button class="tab t-dashboard" onclick="showTab('dashboard')" id="tab-dashboard">📈 Dashboard</button>
   </div>
@@ -296,7 +297,8 @@ input,select,button,textarea{font-family:inherit}
   <button class="sidebar-btn active" onclick="showTab('registro')" id="side-registro">💸 Egresos</button>
   <div class="sidebar-divider"></div>
   <button class="sidebar-btn" onclick="showTab('historial')" id="side-historial">📋 Historial</button>
-  <button class="sidebar-btn s-layclean" onclick="showTab('layclean')" id="side-layclean">🫧 Layclean</button>
+  <button class="sidebar-btn s-layclean" onclick="showTab('layclean')" id="side-layclean">🫧 Layclean gastos</button>
+  <button class="sidebar-btn s-layclean" onclick="showTab('layclean-ing')" id="side-layclean-ing">💚 Layclean ventas</button>
   <div class="sidebar-divider"></div>
   <button class="sidebar-btn s-ingresos" onclick="showTab('ingresos')" id="side-ingresos">💵 Ingresos</button>
   <button class="sidebar-btn s-dashboard" onclick="showTab('dashboard')" id="side-dashboard">📈 Dashboard</button>
@@ -406,10 +408,10 @@ input,select,button,textarea{font-family:inherit}
         </div>
       </div>
     </div>
-    <button class="mic-btn" id="mic-btn-egreso" onclick="startMic('egreso')">🎙️ Dictar gasto</button>
+    <button class="mic-btn" id="mic-btn-egreso" onclick="startMic('egreso')" style="background:#FFEE8C;color:#0a0f1a;font-weight:800;border:none">🎙️ Dictar egreso</button>
     <div class="mic-result" id="mic-result-egreso"></div>
     <p class="mic-tip">Di solo: descripción y monto. Ej: <em>"Almuerzo familiar ciento veinte"</em> o <em>"gasolina doscientos"</em></p>
-    <button class="btn-primary btn-blue" onclick="addExpense()">+ Registrar Gasto Personal</button>
+    <button class="btn-primary btn-blue" onclick="addExpense()">Registrar Egreso</button>
   </div>
   <div class="card" id="recent-card" style="display:none">
     <p class="sec-title">Últimos registros</p>
@@ -476,10 +478,10 @@ input,select,button,textarea{font-family:inherit}
         </div>
       </div>
     </div>
-    <button class="mic-btn" id="mic-btn-ingreso" onclick="startMic('ingreso')">🎙️ Dictar ingreso</button>
+    <button class="mic-btn" id="mic-btn-ingreso" onclick="startMic('ingreso')" style="background:#FFEE8C;color:#0a0f1a;font-weight:800;border:none">🎙️ Dictar ingreso</button>
     <div class="mic-result" id="mic-result-ingreso"></div>
     <p class="mic-tip">Di solo: descripción y monto. Ej: <em>"Sueldo tres mil quinientos"</em></p>
-    <button class="btn-primary btn-green" onclick="addIngreso()">+ Registrar Ingreso</button>
+    <button class="btn-primary btn-green" onclick="addIngreso()">Registrar Ingreso</button>
   </div>
   <div class="filter-row">
     <select id="ing-month" onchange="renderIngresos()"></select>
@@ -585,15 +587,98 @@ input,select,button,textarea{font-family:inherit}
         </div>
       </div>
     </div>
-    <button class="mic-btn" id="mic-btn-layclean" onclick="startMic('layclean')">🎙️ Dictar gasto Layclean</button>
+    <button class="mic-btn" id="mic-btn-layclean" onclick="startMic('layclean')" style="background:#FFEE8C;color:#0a0f1a;font-weight:800;border:none">🎙️ Dictar egreso</button>
     <div class="mic-result" id="mic-result-layclean"></div>
     <p class="mic-tip">Di solo: descripción y monto. Ej: <em>"Etiquetas doscientos"</em></p>
-    <button class="btn-primary btn-layclean" onclick="addLayclean()">+ Registrar Gasto Layclean</button>
+    <button class="btn-primary btn-layclean" onclick="addLayclean()">Registrar Egreso</button>
   </div>
   <div class="filter-row">
     <select id="l-month" onchange="renderLayclean()"></select>
   </div>
   <div id="layclean-content"></div>
+</div>
+
+<!-- ══ LAYCLEAN INGRESOS ══ -->
+<div id="panel-layclean-ing" style="display:none">
+  <div class="lay-banner">
+    <span class="lay-logo">🫧</span>
+    <div>
+      <div class="lay-title">Layclean · Ventas</div>
+      <div class="lay-sub">💚 Registro de ingresos y ventas</div>
+    </div>
+    <div class="lay-stats">
+      <p id="lay-ing-count">0 ventas</p>
+      <p class="hl">● Activo</p>
+    </div>
+  </div>
+  <div class="card card-green">
+    <div class="field">
+      <label class="field-label">Descripción</label>
+      <input type="text" id="li-desc" placeholder="Ej: Venta jabón manos x5 unidades" inputmode="text" autocomplete="off"/>
+    </div>
+    <div class="row2" style="margin-bottom:11px">
+      <div class="field" style="margin:0">
+        <label class="field-label">Monto</label>
+        <input type="number" id="li-amount" placeholder="0.00" inputmode="decimal" step="0.01" min="0"/>
+      </div>
+      <div class="field" style="margin:0">
+        <label class="field-label">Moneda</label>
+        <select id="li-currency">
+          <option value="PEN">🇵🇪 Soles</option>
+          <option value="USD">🇺🇸 Dólares</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label class="field-label">Producto vendido</label>
+      <select id="li-category">
+        <optgroup label="── Productos Layclean ──">
+          <option value="Concentrado Multi-surface 20ml|VentaLay">🧪 Concentrado Multi-surface 20ml</option>
+          <option value="Jabón de manos líquido|VentaLay">🫧 Jabón de manos líquido</option>
+          <option value="Lavavajillas|VentaLay">🍽️ Lavavajillas</option>
+          <option value="Home Spray|VentaLay">🌿 Home Spray</option>
+          <option value="Difusor de Varillas|VentaLay">🕯️ Difusor de Varillas</option>
+          <option value="Pack / Combo productos|VentaLay">📦 Pack / Combo productos</option>
+          <option value="Kit Layclean|VentaLay">🎁 Kit Layclean</option>
+          <option value="Botella Pulverizadora 500ml|VentaLay">💦 Botella Pulverizadora 500ml</option>
+          <option value="Otros productos|VentaLay">🛒 Otros productos</option>
+        </optgroup>
+        <optgroup label="── Canal de venta ──">
+          <option value="Venta por web|VentaLay">🌐 Venta por web</option>
+          <option value="Venta por WhatsApp|VentaLay">💬 Venta por WhatsApp</option>
+          <option value="Venta en tienda / feria|VentaLay">🏪 Venta en tienda / feria</option>
+          <option value="Venta a distribuidor|VentaLay">🤝 Venta a distribuidor</option>
+        </optgroup>
+        <optgroup label="── Forma de pago ──">
+          <option value="Cobro por Yape|VentaLay">📱 Cobro por Yape</option>
+          <option value="Cobro por Plin|VentaLay">📲 Cobro por Plin</option>
+          <option value="Cobro por transferencia|VentaLay">🏦 Cobro por transferencia</option>
+          <option value="Cobro en efectivo|VentaLay">💵 Cobro en efectivo</option>
+          <option value="Cobro por tarjeta|VentaLay">💳 Cobro por tarjeta</option>
+        </optgroup>
+      </select>
+    </div>
+    <div class="row2" style="margin-bottom:13px">
+      <div class="field" style="margin:0">
+        <label class="field-label">Fecha</label>
+        <input type="date" id="li-date"/>
+      </div>
+      <div class="field" style="margin:0">
+        <label class="field-label">Tipo</label>
+        <div style="padding:11px 12px;background:#070c14;border:1px solid #1c2333;border-radius:9px;font-size:12px">
+          <span class="badge badge-ingreso">Venta</span>
+        </div>
+      </div>
+    </div>
+    <button class="mic-btn" id="mic-btn-layclean-ing" onclick="startMic('layclean-ing')" style="background:#FFEE8C;color:#0a0f1a;font-weight:800;border:none">🎙️ Dictar venta</button>
+    <div class="mic-result" id="mic-result-layclean-ing"></div>
+    <p class="mic-tip">Ej: <em>"Jabón de manos cincuenta soles"</em></p>
+    <button class="btn-primary btn-green" onclick="addLaycleanIng()">Registrar Venta</button>
+  </div>
+  <div class="filter-row">
+    <select id="li-month" onchange="renderLaycleanIng()"></select>
+  </div>
+  <div id="layclean-ing-content"></div>
 </div>
 
 </div><!-- end content -->
@@ -645,28 +730,29 @@ const EMOJIS={
   "Acciones / Hapi":"📈","Criptomonedas":"🪙","Fondos de inversión":"💹","Depósito a plazo fijo":"🏦","Bienes raíces":"🏘️","Otras inversiones":"💎",
   "Entretenimiento":"🎉","Snacks / cafés":"☕","Delivery":"🛵","Propinas":"💵","Otros pequeños":"🐜","Veterinaria":"🏥","Baño y peluquería mascota":"✂️","Alimento mascotas":"🦴","Accesorios mascotas":"🐾",
   "Sueldo / salario":"💼","RHE - Recibo por Honorarios":"📄","Honorarios / freelance":"🧑‍💻","Horas extras":"⏰","Bono / comisión":"🏅","Ventas Layclean":"🫧","Otros ingresos del negocio":"💡","Dividendos / acciones":"📈","Intereses / rendimientos":"💹","Venta de activos":"💰","Alquiler de propiedad":"🏘️","Transferencia recibida":"📥","Otros ingresos":"🎁",
-  "Insumos / materias primas":"🧪","Registro de marca / trámites":"📜","Publicidad y marketing":"📣","Transporte y delivery":"🚚","Equipos y herramientas":"🔧","Otros gastos del negocio":"🗂️","Packaging - etiquetas":"🏷️","Packaging - botellas y tapas":"🍶","Packaging - cajas":"📦","Pago a proveedores":"🤝","Importaciones":"🌍","Celulares del negocio":"📱","Web / dominio / hosting":"🌐","Software de facturación":"🧾","Software y suscripciones":"💻","Contadora / contabilidad":"📊","Asesorías y consultoría":"🎓","Eventos y ferias":"🎪","Alquiler de local":"🏢","Pago de planilla":"👥","Servicios del local (luz/agua)":"⚡","Alquiler de propiedad":"🏘️"
+  "Insumos / materias primas":"🧪","Registro de marca / trámites":"📜","Publicidad y marketing":"📣","Transporte y delivery":"🚚","Equipos y herramientas":"🔧","Otros gastos del negocio":"🗂️","Packaging - etiquetas":"🏷️","Packaging - botellas y tapas":"🍶","Packaging - cajas":"📦","Pago a proveedores":"🤝","Importaciones":"🌍","Celulares del negocio":"📱","Web / dominio / hosting":"🌐","Software de facturación":"🧾","Software y suscripciones":"💻","Contadora / contabilidad":"📊","Asesorías y consultoría":"🎓","Eventos y ferias":"🎪","Concentrado Multi-surface 20ml":"🧪","Jabón de manos líquido":"🫧","Lavavajillas":"🍽️","Home Spray":"🌿","Difusor de Varillas":"🕯️","Kit Layclean":"🎁","Botella Pulverizadora 500ml":"💦","Pack / Combo productos":"📦","Otros productos":"🛒","Venta por web":"🌐","Venta por WhatsApp":"💬","Venta en tienda / feria":"🏪","Venta a distribuidor":"🤝","Cobro por Yape":"📱","Cobro por Plin":"📲","Cobro por transferencia":"🏦","Cobro en efectivo":"💵","Cobro por tarjeta":"💳","Alquiler de local":"🏢","Pago de planilla":"👥","Servicios del local (luz/agua)":"⚡","Alquiler de propiedad":"🏘️"
 };
 
-let expenses=[], layExpenses=[], ingresos=[];
+let expenses=[], layExpenses=[], ingresos=[], layIngresos=[];
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 function init(){
   try{expenses=JSON.parse(localStorage.getItem("gastos_v2")||"[]");}catch{expenses=[];}
   try{layExpenses=JSON.parse(localStorage.getItem("layclean_v1")||"[]");}catch{layExpenses=[];}
   try{ingresos=JSON.parse(localStorage.getItem("ingresos_v1")||"[]");}catch{ingresos=[];}
+  try{layIngresos=JSON.parse(localStorage.getItem("lay_ing_v1")||"[]");}catch{layIngresos=[];}
   const today=new Date();
   const ds=today.toISOString().split("T")[0];
-  ["f-date","l-date","i-date"].forEach(id=>document.getElementById(id).value=ds);
+  ["f-date","l-date","i-date","li-date"].forEach(id=>document.getElementById(id).value=ds);
   MONTHS.forEach(m=>{
-    ["h-month","d-month","l-month","ing-month"].forEach(id=>{
+    ["h-month","d-month","l-month","ing-month","li-month"].forEach(id=>{
       const o=document.createElement("option");o.value=m;o.textContent=m;
       document.getElementById(id).appendChild(o);
     });
   });
   const cm=MONTHS[today.getMonth()];
   ["h-month","d-month","l-month","ing-month"].forEach(id=>document.getElementById(id).value=cm);
-  updateCount();renderRecent();renderHistorial();renderLayclean();renderIngresos();renderDashboard();
+  updateCount();renderRecent();renderHistorial();renderLayclean();renderLaycleanIng();renderIngresos();renderDashboard();
   loadFromCloud();
 }
 
@@ -674,12 +760,14 @@ function save(){
   try{localStorage.setItem("gastos_v2",JSON.stringify(expenses));}catch{}
   try{localStorage.setItem("layclean_v1",JSON.stringify(layExpenses));}catch{}
   try{localStorage.setItem("ingresos_v1",JSON.stringify(ingresos));}catch{}
+  try{localStorage.setItem("lay_ing_v1",JSON.stringify(layIngresos));}catch{}
 }
 
 function updateCount(){
   const total=expenses.length+layExpenses.length+ingresos.length;
   document.getElementById("exp-count").textContent=total+" registros";
   document.getElementById("lay-count").textContent=layExpenses.length+" gastos";
+  if(document.getElementById("lay-ing-count")) document.getElementById("lay-ing-count").textContent=layIngresos.length+" ventas";
 }
 
 // ── CLOUD SYNC ────────────────────────────────────────────────────────────────
@@ -711,6 +799,7 @@ async function loadFromCloud(){
     if(data.personal) expenses=data.personal.map(e=>({...e,id:Number(e.id),amount:Number(e.amount)}));
     if(data.layclean) layExpenses=data.layclean.map(e=>({...e,id:Number(e.id),amount:Number(e.amount)}));
     if(data.ingresos) ingresos=data.ingresos.map(e=>({...e,id:Number(e.id),amount:Number(e.amount)}));
+    if(data.lay_ing) layIngresos=data.lay_ing.map(e=>({...e,id:Number(e.id),amount:Number(e.amount)}));
     save();showSync("☁️ Sincronizado",true);
     updateCount();renderDashboard();renderRecent();renderHistorial();renderLayclean();renderIngresos();
   }catch{showSync("📴 Sin conexión",false);}
@@ -803,6 +892,7 @@ function itemHTML(e,showDel,store){
   let delFn="";
   if(store==="layclean") delFn="askDeleteLay("+e.id+")";
   else if(store==="ingresos") delFn="askDeleteIng("+e.id+")";
+  else if(store==="lay_ing") delFn="askDeleteLayIng("+e.id+")";
   else delFn="askDelete("+e.id+")";
   let actionBtns="";
   if(showDel){
@@ -864,6 +954,49 @@ function saveEdit(){
   showToast("✅ Actualizado");
 }
 
+// ── ADD LAYCLEAN INGRESO ─────────────────────────────────────────────────────
+function addLaycleanIng(){
+  const desc=document.getElementById("li-desc").value.trim();
+  const amount=parseFloat(document.getElementById("li-amount").value);
+  const currency=document.getElementById("li-currency").value;
+  const catVal=document.getElementById("li-category").value;
+  const date=document.getElementById("li-date").value;
+  if(!desc||!amount||amount<=0)return;
+  const[cat,type]=catVal.split("|");
+  const d=new Date(date+"T12:00:00");
+  const month=MONTHS[d.getMonth()];
+  const e={id:Date.now(),desc,amount,currency,cat,type,date,month,source:"lay_ing"};
+  layIngresos.unshift(e);save();syncToCloud("save",e);
+  document.getElementById("li-desc").value="";document.getElementById("li-amount").value="";
+  updateCount();renderLaycleanIng();renderDashboard();showToast("💚 Venta Layclean registrada");
+}
+
+// ── RENDER LAYCLEAN INGRESOS ──────────────────────────────────────────────────
+function renderLaycleanIng(){
+  const month=document.getElementById("li-month").value;
+  const filtered=layIngresos.filter(function(e){return e.month===month;});
+  const el=document.getElementById("layclean-ing-content");
+  if(!filtered.length){el.innerHTML='<div class="card empty"><div class="empty-icon">💚</div><div class="empty-text">Sin ventas en '+month+'</div></div>';return;}
+  const pen=filtered.filter(function(e){return e.currency==="PEN";}).reduce(function(s,e){return s+e.amount;},0);
+  const usd=filtered.filter(function(e){return e.currency==="USD";}).reduce(function(s,e){return s+e.amount;},0);
+  const fmt=function(n){return n.toLocaleString("es-PE",{minimumFractionDigits:2,maximumFractionDigits:2});};
+  const byCat={};filtered.forEach(function(e){if(e.currency==="PEN")byCat[e.cat]=(byCat[e.cat]||0)+e.amount;});
+  let topHTML="";
+  Object.entries(byCat).sort(function(a,b){return b[1]-a[1];}).forEach(function(entry){
+    const cat=entry[0],amt=entry[1];
+    const p=pen>0?(amt/pen)*100:0;
+    topHTML+='<div class="prog-wrap"><div class="prog-header"><span class="prog-name">'+(EMOJIS[cat]||"💚")+" "+cat+'</span><span class="prog-amt" style="color:#58ffb4">S/'+fmt(amt)+'</span></div><div class="prog-bar"><div class="prog-fill pf-cyan" style="width:'+Math.min(p,100)+'%"></div></div></div>';
+  });
+  let html='';
+  html+='<div class="kpi-grid">';
+  html+='<div class="kpi income"><div class="kpi-label">💚 Ventas Soles</div><div class="kpi-val">S/'+fmt(pen)+'</div></div>';
+  html+='<div class="kpi income"><div class="kpi-label">💚 Ventas Dólares</div><div class="kpi-val">$'+fmt(usd)+'</div></div>';
+  html+='</div>';
+  if(topHTML) html+='<div class="card"><p class="sec-title">Por producto / canal</p>'+topHTML+'</div>';
+  html+='<div class="card">'+filtered.map(function(e){return itemHTML(e,true,"lay_ing");}).join("")+'</div>';
+  el.innerHTML=html;
+}
+
 // ── RENDER RECENT ─────────────────────────────────────────────────────────────
 function renderRecent(){
   const el=document.getElementById("recent-list");
@@ -881,6 +1014,7 @@ function renderHistorial(){
   if(source==="all"||source==="personal") all=all.concat(expenses.filter(function(e){return e.month===month;}));
   if(source==="all"||source==="ingresos") all=all.concat(ingresos.filter(function(e){return e.month===month;}));
   if(source==="all"||source==="layclean") all=all.concat(layExpenses.filter(function(e){return e.month===month;}));
+  if(source==="all"||source==="layclean") all=all.concat(layIngresos.filter(function(e){return e.month===month;}));
   all.sort(function(a,b){return b.date.localeCompare(a.date);});
   const el=document.getElementById("historial-content");
   if(!all.length){el.innerHTML='<div class="card empty"><div class="empty-icon">📭</div><div class="empty-text">Sin registros en '+month+'</div></div>';return;}
@@ -1058,7 +1192,7 @@ function buildCSV(data){
   const r=data.map(e=>e.date+","+e.month+',"'+ e.desc+'","'+ e.cat+'",'+e.type+","+e.amount+","+e.currency+","+(e.source||"personal")).join("\n");
   return h+r;
 }
-function exportAll(){doExport([...expenses,...ingresos,...layExpenses]);}
+function exportAll(){doExport([...expenses,...ingresos,...layExpenses,...layIngresos]);}
 function exportLayclean(){doExport(layExpenses);}
 function doExport(data){
   const csv=buildCSV(data);
@@ -1251,7 +1385,19 @@ var MIC_CATS = [
   {name:"Contadora / contabilidad",type:"Negocio",keys:["contadora","contabilidad","sunat"]},
   {name:"Registro de marca / trámites",type:"Negocio",keys:["indecopi","marca","tramite"]},
   {name:"Software de facturación",type:"Negocio",keys:["facturacion","nubefact"]},
-  {name:"Otros gastos del negocio",type:"Negocio",keys:["gasto negocio"]}
+  {name:"Otros gastos del negocio",type:"Negocio",keys:["gasto negocio"]},
+  {name:"Concentrado Multi-surface 20ml",type:"VentaLay",keys:["concentrado","multi surface","multisurface"]},
+  {name:"Jabón de manos líquido",type:"VentaLay",keys:["jabon","jabón","jabón manos","jabon manos"]},
+  {name:"Lavavajillas",type:"VentaLay",keys:["lavavajillas","vajillas"]},
+  {name:"Home Spray",type:"VentaLay",keys:["home spray","spray","ambientador"]},
+  {name:"Difusor de Varillas",type:"VentaLay",keys:["difusor","varillas"]},
+  {name:"Cobro por Yape",type:"VentaLay",keys:["yape"]},
+  {name:"Cobro por Plin",type:"VentaLay",keys:["plin"]},
+  {name:"Cobro por transferencia",type:"VentaLay",keys:["transferencia"]},
+  {name:"Cobro en efectivo",type:"VentaLay",keys:["efectivo"]},
+  {name:"Pack / Combo productos",type:"VentaLay",keys:["pack","combo"]},
+  {name:"Kit Layclean",type:"VentaLay",keys:["kit","kit layclean"]},
+  {name:"Botella Pulverizadora 500ml",type:"VentaLay",keys:["botella pulverizadora","pulverizadora"]}
 ];
 
 var MIC_NUMS = {
@@ -1303,7 +1449,7 @@ function micGetAmount(text) {
 
 function micGetCategory(text, section) {
   var t = micNormalize(text);
-  var filter = section==="ingreso" ? ["Ingreso"] : section==="layclean" ? ["Negocio"] : ["Fijo","Variable","Hormiga","Inversion"];
+  var filter = section==="ingreso" ? ["Ingreso"] : (section==="layclean"||section==="layclean-ing") ? ["Negocio","VentaLay"] : ["Fijo","Variable","Hormiga","Inversion"];
   var best = null, score = 0;
   for (var i=0; i<MIC_CATS.length; i++) {
     var c = MIC_CATS[i];
@@ -1379,10 +1525,10 @@ function micGetDesc(original, amount, cat) {
 }
 
 function micApplyForm(desc, amount, currency, cat, section) {
-  var fDesc = section==="egreso"?"f-desc":section==="ingreso"?"i-desc":"l-desc";
-  var fAmt  = section==="egreso"?"f-amount":section==="ingreso"?"i-amount":"l-amount";
-  var fCur  = section==="egreso"?"f-currency":section==="ingreso"?"i-currency":"l-currency";
-  var fCat  = section==="egreso"?"f-category":section==="ingreso"?"i-category":"l-category";
+  var fDesc = section==="egreso"?"f-desc":section==="ingreso"?"i-desc":section==="layclean-ing"?"li-desc":"l-desc";
+  var fAmt  = section==="egreso"?"f-amount":section==="ingreso"?"i-amount":section==="layclean-ing"?"li-amount":"l-amount";
+  var fCur  = section==="egreso"?"f-currency":section==="ingreso"?"i-currency":section==="layclean-ing"?"li-currency":"l-currency";
+  var fCat  = section==="egreso"?"f-category":section==="ingreso"?"i-category":section==="layclean-ing"?"li-category":"l-category";
   if (desc) document.getElementById(fDesc).value = desc;
   if (amount) document.getElementById(fAmt).value = amount;
   document.getElementById(fCur).value = currency;
@@ -1403,12 +1549,14 @@ var activeRecognition = null;
 function startMic(section) {
   var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) { showToast("Micrófono no soportado"); return; }
-  var btn = document.getElementById("mic-btn-"+section);
-  var res = document.getElementById("mic-result-"+section);
+  var btnId = section==="layclean-ing" ? "mic-btn-layclean-ing" : "mic-btn-"+section;
+  var resId = section==="layclean-ing" ? "mic-result-layclean-ing" : "mic-result-"+section;
+  var btn = document.getElementById(btnId);
+  var res = document.getElementById(resId);
   if (activeRecognition) {
     activeRecognition.stop(); activeRecognition = null;
     btn.className = "mic-btn";
-    btn.innerHTML = "Dictar gasto";
+    btn.innerHTML = "🎙️ Dictar egreso";
     return;
   }
   var r = new SR();
@@ -1442,18 +1590,18 @@ function startMic(section) {
     // Keep result visible for 8 seconds
     setTimeout(function() {
       btn.className = "mic-btn";
-      btn.innerHTML = "🎙️ Dictar " + label;
+      btn.innerHTML = "🎙️ Dictar egreso";
       res.className = "mic-result";
     }, 8000);
   };
   r.onerror = function(e) {
     activeRecognition = null;
     btn.className = "mic-btn";
-    btn.innerHTML = "Dictar gasto";
+    btn.innerHTML = "🎙️ Dictar egreso";
     res.textContent = e.error === "not-allowed" ? "Permite el microfono" : "Error: " + e.error;
   };
   r.onend = function() {
-    if (activeRecognition) { activeRecognition = null; btn.className = "mic-btn"; btn.innerHTML = "Dictar gasto"; }
+    if (activeRecognition) { activeRecognition = null; btn.className = "mic-btn"; btn.innerHTML = "🎙️ Dictar egreso"; }
   };
   r.start();
   setTimeout(function() { if (activeRecognition) { activeRecognition.stop(); } }, 8000);
@@ -1511,7 +1659,19 @@ var MIC_CATS = [
   {name:"Contadora / contabilidad",type:"Negocio",keys:["contadora","contabilidad","sunat"]},
   {name:"Registro de marca / trámites",type:"Negocio",keys:["indecopi","marca","tramite"]},
   {name:"Software de facturación",type:"Negocio",keys:["facturacion","nubefact"]},
-  {name:"Otros gastos del negocio",type:"Negocio",keys:["gasto negocio"]}
+  {name:"Otros gastos del negocio",type:"Negocio",keys:["gasto negocio"]},
+  {name:"Concentrado Multi-surface 20ml",type:"VentaLay",keys:["concentrado","multi surface","multisurface"]},
+  {name:"Jabón de manos líquido",type:"VentaLay",keys:["jabon","jabón","jabón manos","jabon manos"]},
+  {name:"Lavavajillas",type:"VentaLay",keys:["lavavajillas","vajillas"]},
+  {name:"Home Spray",type:"VentaLay",keys:["home spray","spray","ambientador"]},
+  {name:"Difusor de Varillas",type:"VentaLay",keys:["difusor","varillas"]},
+  {name:"Cobro por Yape",type:"VentaLay",keys:["yape"]},
+  {name:"Cobro por Plin",type:"VentaLay",keys:["plin"]},
+  {name:"Cobro por transferencia",type:"VentaLay",keys:["transferencia"]},
+  {name:"Cobro en efectivo",type:"VentaLay",keys:["efectivo"]},
+  {name:"Pack / Combo productos",type:"VentaLay",keys:["pack","combo"]},
+  {name:"Kit Layclean",type:"VentaLay",keys:["kit","kit layclean"]},
+  {name:"Botella Pulverizadora 500ml",type:"VentaLay",keys:["botella pulverizadora","pulverizadora"]}
 ];
 
 var MIC_NUMS = {
@@ -1563,7 +1723,7 @@ function micGetAmount(text) {
 
 function micGetCategory(text, section) {
   var t = micNormalize(text);
-  var filter = section==="ingreso" ? ["Ingreso"] : section==="layclean" ? ["Negocio"] : ["Fijo","Variable","Hormiga","Inversion"];
+  var filter = section==="ingreso" ? ["Ingreso"] : (section==="layclean"||section==="layclean-ing") ? ["Negocio","VentaLay"] : ["Fijo","Variable","Hormiga","Inversion"];
   var best = null, score = 0;
   for (var i=0; i<MIC_CATS.length; i++) {
     var c = MIC_CATS[i];
@@ -1639,10 +1799,10 @@ function micGetDesc(original, amount, cat) {
 }
 
 function micApplyForm(desc, amount, currency, cat, section) {
-  var fDesc = section==="egreso"?"f-desc":section==="ingreso"?"i-desc":"l-desc";
-  var fAmt  = section==="egreso"?"f-amount":section==="ingreso"?"i-amount":"l-amount";
-  var fCur  = section==="egreso"?"f-currency":section==="ingreso"?"i-currency":"l-currency";
-  var fCat  = section==="egreso"?"f-category":section==="ingreso"?"i-category":"l-category";
+  var fDesc = section==="egreso"?"f-desc":section==="ingreso"?"i-desc":section==="layclean-ing"?"li-desc":"l-desc";
+  var fAmt  = section==="egreso"?"f-amount":section==="ingreso"?"i-amount":section==="layclean-ing"?"li-amount":"l-amount";
+  var fCur  = section==="egreso"?"f-currency":section==="ingreso"?"i-currency":section==="layclean-ing"?"li-currency":"l-currency";
+  var fCat  = section==="egreso"?"f-category":section==="ingreso"?"i-category":section==="layclean-ing"?"li-category":"l-category";
   if (desc) document.getElementById(fDesc).value = desc;
   if (amount) document.getElementById(fAmt).value = amount;
   document.getElementById(fCur).value = currency;
@@ -1663,12 +1823,14 @@ var activeRecognition = null;
 function startMic(section) {
   var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) { showToast("Micrófono no soportado"); return; }
-  var btn = document.getElementById("mic-btn-"+section);
-  var res = document.getElementById("mic-result-"+section);
+  var btnId = section==="layclean-ing" ? "mic-btn-layclean-ing" : "mic-btn-"+section;
+  var resId = section==="layclean-ing" ? "mic-result-layclean-ing" : "mic-result-"+section;
+  var btn = document.getElementById(btnId);
+  var res = document.getElementById(resId);
   if (activeRecognition) {
     activeRecognition.stop(); activeRecognition = null;
     btn.className = "mic-btn";
-    btn.innerHTML = "Dictar gasto";
+    btn.innerHTML = "🎙️ Dictar egreso";
     return;
   }
   var r = new SR();
@@ -1702,18 +1864,18 @@ function startMic(section) {
     // Keep result visible for 8 seconds
     setTimeout(function() {
       btn.className = "mic-btn";
-      btn.innerHTML = "🎙️ Dictar " + label;
+      btn.innerHTML = "🎙️ Dictar egreso";
       res.className = "mic-result";
     }, 8000);
   };
   r.onerror = function(e) {
     activeRecognition = null;
     btn.className = "mic-btn";
-    btn.innerHTML = "Dictar gasto";
+    btn.innerHTML = "🎙️ Dictar egreso";
     res.textContent = e.error === "not-allowed" ? "Permite el microfono" : "Error: " + e.error;
   };
   r.onend = function() {
-    if (activeRecognition) { activeRecognition = null; btn.className = "mic-btn"; btn.innerHTML = "Dictar gasto"; }
+    if (activeRecognition) { activeRecognition = null; btn.className = "mic-btn"; btn.innerHTML = "🎙️ Dictar egreso"; }
   };
   r.start();
   setTimeout(function() { if (activeRecognition) { activeRecognition.stop(); } }, 8000);
