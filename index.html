@@ -1186,205 +1186,389 @@ function renderAnnual() {
 
 
 
-const WORD_NUMBERS = {
-  "cero":0,"un":1,"uno":1,"una":1,"dos":2,"tres":3,"cuatro":4,"cinco":5,"seis":6,"siete":7,"ocho":8,"nueve":9,
-  "diez":10,"once":11,"doce":12,"trece":13,"catorce":14,"quince":15,"dieciseis":16,"diecisiete":17,"dieciocho":18,"diecinueve":19,
-  "veinte":20,"veintiuno":21,"veintidos":22,"veintitres":23,"veinticuatro":24,"veinticinco":25,"veintiseis":26,"veintisiete":27,"veintiocho":28,"veintinueve":29,
-  "treinta":30,"cuarenta":40,"cincuenta":50,"sesenta":60,"setenta":70,"ochenta":80,"noventa":90,
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// ── MICROPHONE ────────────────────────────────────────────────────────────────
+var MIC_CATS = [
+  {name:"Colegio",type:"Fijo",keys:["colegio","escuela","mensualidad"]},
+  {name:"Luz",type:"Fijo",keys:["luz","electricidad"]},
+  {name:"Agua",type:"Fijo",keys:["agua"]},
+  {name:"Celulares",type:"Fijo",keys:["celular","movistar","claro","entel"]},
+  {name:"Internet",type:"Fijo",keys:["internet","wifi"]},
+  {name:"Suscripciones",type:"Fijo",keys:["suscripcion","netflix","spotify","amazon","disney"]},
+  {name:"Seguro de salud",type:"Fijo",keys:["seguro salud","rimac","pacifico"]},
+  {name:"Seguro vehicular",type:"Fijo",keys:["seguro vehicular","seguro auto"]},
+  {name:"SOAT",type:"Fijo",keys:["soat"]},
+  {name:"Intereses tarjeta de crédito",type:"Fijo",keys:["interes tarjeta","tarjeta"]},
+  {name:"Alquiler / hipoteca",type:"Fijo",keys:["alquiler","hipoteca"]},
+  {name:"Comida y restaurantes",type:"Variable",keys:["comida","restaurante","almuerzo","cena","desayuno","polleria","chifa","ceviche"]},
+  {name:"Supermercado",type:"Variable",keys:["supermercado","plaza","wong","tottus","metro"]},
+  {name:"Combustible",type:"Variable",keys:["combustible","gasolina","grifo"]},
+  {name:"Transporte / taxi",type:"Variable",keys:["taxi","uber","bus","transporte"]},
+  {name:"Compras para la casa",type:"Variable",keys:["casa","hogar","mueble"]},
+  {name:"Vestimenta",type:"Variable",keys:["ropa","zapatos","zapatillas","polo"]},
+  {name:"Salud y farmacia",type:"Variable",keys:["farmacia","medicina","doctor","clinica"]},
+  {name:"Veterinaria",type:"Variable",keys:["veterinaria","veterinario"]},
+  {name:"Alimento mascotas",type:"Variable",keys:["alimento mascota","comida perro","comida gato"]},
+  {name:"Acciones / Hapi",type:"Inversion",keys:["accion","hapi","bolsa","inversion"]},
+  {name:"Criptomonedas",type:"Inversion",keys:["cripto","bitcoin"]},
+  {name:"Fondos de inversión",type:"Inversion",keys:["fondo"]},
+  {name:"Depósito a plazo fijo",type:"Inversion",keys:["plazo fijo","deposito"]},
+  {name:"Entretenimiento",type:"Hormiga",keys:["entretenimiento","cine"]},
+  {name:"Snacks / cafés",type:"Hormiga",keys:["cafe","snack","starbucks","cafeteria"]},
+  {name:"Delivery",type:"Hormiga",keys:["delivery","rappi","pedidos"]},
+  {name:"Propinas",type:"Hormiga",keys:["propina","tip"]},
+  {name:"Otros pequeños",type:"Hormiga",keys:["otro","varios"]},
+  {name:"Sueldo / salario",type:"Ingreso",keys:["sueldo","salario","pago"]},
+  {name:"RHE - Recibo por Honorarios",type:"Ingreso",keys:["rhe","recibo honorario","honorario"]},
+  {name:"Honorarios / freelance",type:"Ingreso",keys:["freelance","proyecto"]},
+  {name:"Bono / comisión",type:"Ingreso",keys:["bono","comision"]},
+  {name:"Ventas Layclean",type:"Ingreso",keys:["venta layclean"]},
+  {name:"Dividendos / acciones",type:"Ingreso",keys:["dividendo"]},
+  {name:"Otros ingresos",type:"Ingreso",keys:["otro ingreso"]},
+  {name:"Insumos / materias primas",type:"Negocio",keys:["insumo","materia prima","quimico"]},
+  {name:"Packaging - etiquetas",type:"Negocio",keys:["etiqueta","label","sticker"]},
+  {name:"Packaging - botellas y tapas",type:"Negocio",keys:["botella","tapa","envase"]},
+  {name:"Packaging - cajas",type:"Negocio",keys:["caja","carton","empaque"]},
+  {name:"Pago a proveedores",type:"Negocio",keys:["proveedor"]},
+  {name:"Importaciones",type:"Negocio",keys:["importacion","aduana"]},
+  {name:"Alquiler de local",type:"Negocio",keys:["local","almacen","taller"]},
+  {name:"Pago de planilla",type:"Negocio",keys:["planilla","trabajador","empleado"]},
+  {name:"Publicidad y marketing",type:"Negocio",keys:["publicidad","marketing","facebook","instagram"]},
+  {name:"Contadora / contabilidad",type:"Negocio",keys:["contadora","contabilidad","sunat"]},
+  {name:"Registro de marca / trámites",type:"Negocio",keys:["indecopi","marca","tramite"]},
+  {name:"Software de facturación",type:"Negocio",keys:["facturacion","nubefact"]},
+  {name:"Otros gastos del negocio",type:"Negocio",keys:["gasto negocio"]}
+];
+
+var MIC_NUMS = {
+  "un":1,"uno":1,"una":1,"dos":2,"tres":3,"cuatro":4,"cinco":5,"seis":6,"siete":7,"ocho":8,"nueve":9,
+  "diez":10,"once":11,"doce":12,"trece":13,"catorce":14,"quince":15,
+  "veinte":20,"treinta":30,"cuarenta":40,"cincuenta":50,"sesenta":60,"setenta":70,"ochenta":80,"noventa":90,
   "cien":100,"ciento":100,"doscientos":200,"doscientas":200,"trescientos":300,"trescientas":300,
-  "cuatrocientos":400,"cuatrocientas":400,"quinientos":500,"quinientas":500,"seiscientos":600,"seiscientas":600,
-  "setecientos":700,"setecientas":700,"ochocientos":800,"ochocientas":800,"novecientos":900,"novecientas":900,
-  "mil":1000,"dos mil":2000,"tres mil":3000,"cuatro mil":4000,"cinco mil":5000,
-  "diez mil":10000,"veinte mil":20000,"treinta mil":30000,"cincuenta mil":50000,"cien mil":100000
+  "cuatrocientos":400,"quinientos":500,"quinientas":500,"seiscientos":600,
+  "setecientos":700,"ochocientos":800,"novecientos":900,"novecientas":900,"mil":1000
 };
 
-function wordsToNumber(text) {
-  var result = null;
-  var entries = Object.entries(WORD_NUMBERS).sort(function(a,b){return b[0].length-a[0].length;});
-  var modified = text;
-  for (var i=0; i<entries.length; i++) {
-    var word = entries[i][0], val = entries[i][1];
-    if (modified.indexOf(word) !== -1) {
-      modified = modified.replace(new RegExp(" "+word+" ","gi"), " "+val+" ");
-      modified = modified.replace(new RegExp("^"+word+" ","i"), val+" ");
-      modified = modified.replace(new RegExp(" "+word+"$","i"), " "+val);
-    }
-  }
-  var nums = modified.match(/[0-9]+([.,][0-9]+)?/g);
-  if (nums && nums.length) {
-    if (nums.length === 1) return parseFloat(nums[0].replace(",","."));
-    var total = 0;
-    for (var j=0; j<nums.length; j++) total += parseFloat(nums[j].replace(",","."));
-    return total;
+function micNormalize(t) {
+  return t.toLowerCase()
+    .replace(/[aáàä]/g,"a").replace(/[eéèë]/g,"e")
+    .replace(/[iíìï]/g,"i").replace(/[oóòö]/g,"o")
+    .replace(/[uúùü]/g,"u").replace(/n~/g,"n");
+}
+
+function micGetAmount(text) {
+  var n = text.match(/\d+([.,]\d+)?/);
+  if (n) return parseFloat(n[0].replace(",","."));
+  var t = micNormalize(text);
+  var keys = Object.keys(MIC_NUMS).sort(function(a,b){return b.length-a.length;});
+  for (var i=0; i<keys.length; i++) {
+    if (t.indexOf(keys[i]) !== -1) return MIC_NUMS[keys[i]];
   }
   return null;
 }
 
-function extractDescription(text, amount, category) {
-  var desc = text;
-  desc = desc.replace(/[0-9]+([.,][0-9]+)?/g, "");
-  var words = Object.keys(WORD_NUMBERS);
-  for (var i=0; i<words.length; i++) {
-    try { desc = desc.replace(new RegExp(" "+words[i]+" ","gi")," "); } catch(e){}
-  }
-  desc = desc.replace(/soles?|sol|dolares?|dolar|pen|usd|verdes?/gi, "");
-  if (category) {
-    for (var j=0; j<category.keys.length; j++) {
-      try { desc = desc.replace(new RegExp(category.keys[j],"gi"),""); } catch(e){}
-    }
-  }
-  desc = desc.replace(/  +/g," ").trim();
-  return desc || (category ? category.name : "Gasto");
-}
-
-function applyToForm(parsed, section) {
-  if (section === "egreso") {
-    if (parsed.desc) document.getElementById("f-desc").value = parsed.desc;
-    if (parsed.amount) document.getElementById("f-amount").value = parsed.amount;
-    document.getElementById("f-currency").value = parsed.currency;
-    if (parsed.category) {
-      var sel = document.getElementById("f-category");
-      for (var i=0; i<sel.options.length; i++) {
-        if (sel.options[i].value.indexOf(parsed.category.name+"|") === 0) {
-          sel.value = sel.options[i].value; onCategoryChange(); break;
-        }
-      }
-    }
-  } else if (section === "ingreso") {
-    if (parsed.desc) document.getElementById("i-desc").value = parsed.desc;
-    if (parsed.amount) document.getElementById("i-amount").value = parsed.amount;
-    document.getElementById("i-currency").value = parsed.currency;
-    if (parsed.category) {
-      var sel2 = document.getElementById("i-category");
-      for (var i=0; i<sel2.options.length; i++) {
-        if (sel2.options[i].value.indexOf(parsed.category.name+"|") === 0) { sel2.value = sel2.options[i].value; break; }
-      }
-    }
-  } else if (section === "layclean") {
-    if (parsed.desc) document.getElementById("l-desc").value = parsed.desc;
-    if (parsed.amount) document.getElementById("l-amount").value = parsed.amount;
-    document.getElementById("l-currency").value = parsed.currency;
-    if (parsed.category) {
-      var sel3 = document.getElementById("l-category");
-      for (var i=0; i<sel3.options.length; i++) {
-        if (sel3.options[i].value.indexOf(parsed.category.name+"|") === 0) { sel3.value = sel3.options[i].value; break; }
-      }
-    }
-  }
-}
-
-function parseSpeech(transcript, section) {
-  const text = transcript.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
-  const amount = wordsToNumber(text);
-  const currency = detectCurrency(text);
-  const category = detectCategory(text, section);
-  const desc = extractDescription(transcript, amount, category);
-  return { desc:desc, amount:amount, currency:currency, category:category };
-}
-
-function detectCurrency(text) {
-  if (text.includes("dolar") || text.includes("usd") || text.includes("verde")) return "USD";
-  return "PEN";
-}
-
-function detectCategory(text, section) {
-  const lower = text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-  let best = null, bestScore = 0;
-  const typeFilter = section === "ingreso" ? ["Ingreso"] : section === "layclean" ? ["Negocio"] : ["Fijo","Variable","Hormiga","Inversion"];
-  for (let i = 0; i < ALL_CATEGORIES.length; i++) {
-    const cat = ALL_CATEGORIES[i];
-    if (typeFilter.indexOf(cat.type) === -1) continue;
-    for (let j = 0; j < cat.keys.length; j++) {
-      const k = cat.keys[j].normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-      if (lower.indexOf(k) !== -1 && k.length > bestScore) {
-        best = cat; bestScore = k.length;
-      }
+function micGetCategory(text, section) {
+  var t = micNormalize(text);
+  var filter = section==="ingreso" ? ["Ingreso"] : section==="layclean" ? ["Negocio"] : ["Fijo","Variable","Hormiga","Inversion"];
+  var best = null, score = 0;
+  for (var i=0; i<MIC_CATS.length; i++) {
+    var c = MIC_CATS[i];
+    if (filter.indexOf(c.type) === -1) continue;
+    for (var j=0; j<c.keys.length; j++) {
+      var k = micNormalize(c.keys[j]);
+      if (t.indexOf(k) !== -1 && k.length > score) { best = c; score = k.length; }
     }
   }
   return best;
 }
 
-let activeRecognition = null;
+function micGetDesc(original, amount, cat) {
+  var d = original;
+  d = d.replace(/\d+([.,]\d+)?/g,"");
+  d = d.replace(/soles?|sol|dolares?|dolar/gi,"");
+  if (cat) {
+    for (var i=0; i<cat.keys.length; i++) {
+      try { d = d.replace(new RegExp(cat.keys[i],"gi"),""); } catch(e) {}
+    }
+  }
+  d = d.replace(/\s+/g," ").trim();
+  return d || (cat ? cat.name : "Gasto");
+}
+
+function micApplyForm(desc, amount, currency, cat, section) {
+  var fDesc = section==="egreso"?"f-desc":section==="ingreso"?"i-desc":"l-desc";
+  var fAmt  = section==="egreso"?"f-amount":section==="ingreso"?"i-amount":"l-amount";
+  var fCur  = section==="egreso"?"f-currency":section==="ingreso"?"i-currency":"l-currency";
+  var fCat  = section==="egreso"?"f-category":section==="ingreso"?"i-category":"l-category";
+  if (desc) document.getElementById(fDesc).value = desc;
+  if (amount) document.getElementById(fAmt).value = amount;
+  document.getElementById(fCur).value = currency;
+  if (cat) {
+    var sel = document.getElementById(fCat);
+    for (var i=0; i<sel.options.length; i++) {
+      if (sel.options[i].value.indexOf(cat.name+"|") === 0) {
+        sel.value = sel.options[i].value;
+        if (section==="egreso") onCategoryChange();
+        break;
+      }
+    }
+  }
+}
+
+var activeRecognition = null;
 
 function startMic(section) {
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SpeechRecognition) {
-    showToast("❌ Tu navegador no soporta el micrófono");
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { showToast("Micrófono no soportado"); return; }
+  var btn = document.getElementById("mic-btn-"+section);
+  var res = document.getElementById("mic-result-"+section);
+  if (activeRecognition) {
+    activeRecognition.stop(); activeRecognition = null;
+    btn.className = "mic-btn";
+    btn.innerHTML = "Dictar gasto";
     return;
   }
-  const btn = document.getElementById("mic-btn-"+section);
-  const resultEl = document.getElementById("mic-result-"+section);
-
-  if (activeRecognition) { activeRecognition.stop(); activeRecognition = null; return; }
-
-  const recognition = new SpeechRecognition();
-  recognition.lang = "es-PE";
-  recognition.continuous = false;
-  recognition.interimResults = false;
-  recognition.maxAlternatives = 1;
-  activeRecognition = recognition;
-
+  var r = new SR();
+  r.lang = "es-PE";
+  r.continuous = false;
+  r.interimResults = false;
+  r.maxAlternatives = 1;
+  activeRecognition = r;
   btn.className = "mic-btn listening";
-  btn.innerHTML = "🔴 Escuchando... (toca para parar)";
-  resultEl.className = "mic-result show";
-  resultEl.textContent = "🎙️ Habla ahora...";
-
-  recognition.onresult = (e) => {
-    const transcript = e.results[0][0].transcript;
-    btn.className = "mic-btn processing";
-    btn.innerHTML = "⏳ Procesando...";
-    resultEl.textContent = '📝 Escuché: ' + transcript;
-
-        try {
-      const parsed = parseSpeech(transcript, section);
-      applyToForm(parsed, section);
-
-      let summary = "";
-      if (parsed.desc) summary += "✅ " + parsed.desc;
-      if (parsed.amount) summary += " | " + (parsed.currency==="USD"?"$":"S/") + parsed.amount;
-      if (parsed.category) summary += " | " + parsed.category.name;
-      else summary += " | ⚠️ Elige categoría";
-
-      resultEl.textContent = summary;
-      btn.className = "mic-btn success";
-      btn.innerHTML = "✅ Listo — revisa y confirma";
-      activeRecognition = null;
-      setTimeout(function() {
-        btn.className = "mic-btn";
-        btn.innerHTML = "🎙️ Dictar " + (section==="egreso"?"gasto":section==="ingreso"?"ingreso":"gasto Layclean");
-        resultEl.className = "mic-result";
-      }, 5000);
-    } catch(err) {
-      btn.className = "mic-btn";
-      btn.innerHTML = "🎙️ Dictar gasto";
-      resultEl.textContent = "❌ Error al procesar. Intenta de nuevo.";
-      activeRecognition = null;
-    }
-  };
-
-  recognition.onerror = (e) => {
-    btn.className = "mic-btn";
-    btn.innerHTML = "🎙️ Dictar " + (section==="egreso"?"gasto":section==="ingreso"?"ingreso":"gasto Layclean");
-    resultEl.textContent = "❌ Error: " + (e.error==="not-allowed"?"Permite el micrófono en tu navegador":e.error);
+  btn.innerHTML = "Escuchando...";
+  res.className = "mic-result show";
+  res.textContent = "Habla ahora...";
+  r.onresult = function(e) {
+    var t = e.results[0][0].transcript;
     activeRecognition = null;
-  };
-
-  recognition.onend = () => {
-    if (activeRecognition) { activeRecognition = null; }
-    if (btn.className.includes("listening")) {
+    var cur = t.toLowerCase().indexOf("dolar") !== -1 || t.toLowerCase().indexOf("usd") !== -1 ? "USD" : "PEN";
+    var amt = micGetAmount(t);
+    var cat = micGetCategory(t, section);
+    var desc = micGetDesc(t, amt, cat);
+    micApplyForm(desc, amt, cur, cat, section);
+    var label = section==="egreso"?"gasto":section==="ingreso"?"ingreso":"gasto Layclean";
+    var info = desc + (amt ? " | " + (cur==="USD"?"$":"S/") + amt : "") + (cat ? " | " + cat.name : " | elige categoria");
+    res.textContent = info;
+    btn.className = "mic-btn success";
+    btn.innerHTML = "Listo";
+    setTimeout(function() {
       btn.className = "mic-btn";
-      btn.innerHTML = "🎙️ Dictar " + (section==="egreso"?"gasto":section==="ingreso"?"ingreso":"gasto Layclean");
-    }
+      btn.innerHTML = "Dictar " + label;
+      res.className = "mic-result";
+    }, 4000);
   };
-
-  recognition.start();
-  // Auto-stop after 8 seconds
-  setTimeout(function() {
-    if (activeRecognition) {
-      activeRecognition.stop();
-    }
-  }, 8000);
+  r.onerror = function(e) {
+    activeRecognition = null;
+    btn.className = "mic-btn";
+    btn.innerHTML = "Dictar gasto";
+    res.textContent = e.error === "not-allowed" ? "Permite el microfono" : "Error: " + e.error;
+  };
+  r.onend = function() {
+    if (activeRecognition) { activeRecognition = null; btn.className = "mic-btn"; btn.innerHTML = "Dictar gasto"; }
+  };
+  r.start();
+  setTimeout(function() { if (activeRecognition) { activeRecognition.stop(); } }, 8000);
 }
+
+
+
+init();// ── MICROPHONE ────────────────────────────────────────────────────────────────
+var MIC_CATS = [
+  {name:"Colegio",type:"Fijo",keys:["colegio","escuela","mensualidad"]},
+  {name:"Luz",type:"Fijo",keys:["luz","electricidad"]},
+  {name:"Agua",type:"Fijo",keys:["agua"]},
+  {name:"Celulares",type:"Fijo",keys:["celular","movistar","claro","entel"]},
+  {name:"Internet",type:"Fijo",keys:["internet","wifi"]},
+  {name:"Suscripciones",type:"Fijo",keys:["suscripcion","netflix","spotify","amazon","disney"]},
+  {name:"Seguro de salud",type:"Fijo",keys:["seguro salud","rimac","pacifico"]},
+  {name:"Seguro vehicular",type:"Fijo",keys:["seguro vehicular","seguro auto"]},
+  {name:"SOAT",type:"Fijo",keys:["soat"]},
+  {name:"Intereses tarjeta de crédito",type:"Fijo",keys:["interes tarjeta","tarjeta"]},
+  {name:"Alquiler / hipoteca",type:"Fijo",keys:["alquiler","hipoteca"]},
+  {name:"Comida y restaurantes",type:"Variable",keys:["comida","restaurante","almuerzo","cena","desayuno","polleria","chifa","ceviche"]},
+  {name:"Supermercado",type:"Variable",keys:["supermercado","plaza","wong","tottus","metro"]},
+  {name:"Combustible",type:"Variable",keys:["combustible","gasolina","grifo"]},
+  {name:"Transporte / taxi",type:"Variable",keys:["taxi","uber","bus","transporte"]},
+  {name:"Compras para la casa",type:"Variable",keys:["casa","hogar","mueble"]},
+  {name:"Vestimenta",type:"Variable",keys:["ropa","zapatos","zapatillas","polo"]},
+  {name:"Salud y farmacia",type:"Variable",keys:["farmacia","medicina","doctor","clinica"]},
+  {name:"Veterinaria",type:"Variable",keys:["veterinaria","veterinario"]},
+  {name:"Alimento mascotas",type:"Variable",keys:["alimento mascota","comida perro","comida gato"]},
+  {name:"Acciones / Hapi",type:"Inversion",keys:["accion","hapi","bolsa","inversion"]},
+  {name:"Criptomonedas",type:"Inversion",keys:["cripto","bitcoin"]},
+  {name:"Fondos de inversión",type:"Inversion",keys:["fondo"]},
+  {name:"Depósito a plazo fijo",type:"Inversion",keys:["plazo fijo","deposito"]},
+  {name:"Entretenimiento",type:"Hormiga",keys:["entretenimiento","cine"]},
+  {name:"Snacks / cafés",type:"Hormiga",keys:["cafe","snack","starbucks","cafeteria"]},
+  {name:"Delivery",type:"Hormiga",keys:["delivery","rappi","pedidos"]},
+  {name:"Propinas",type:"Hormiga",keys:["propina","tip"]},
+  {name:"Otros pequeños",type:"Hormiga",keys:["otro","varios"]},
+  {name:"Sueldo / salario",type:"Ingreso",keys:["sueldo","salario","pago"]},
+  {name:"RHE - Recibo por Honorarios",type:"Ingreso",keys:["rhe","recibo honorario","honorario"]},
+  {name:"Honorarios / freelance",type:"Ingreso",keys:["freelance","proyecto"]},
+  {name:"Bono / comisión",type:"Ingreso",keys:["bono","comision"]},
+  {name:"Ventas Layclean",type:"Ingreso",keys:["venta layclean"]},
+  {name:"Dividendos / acciones",type:"Ingreso",keys:["dividendo"]},
+  {name:"Otros ingresos",type:"Ingreso",keys:["otro ingreso"]},
+  {name:"Insumos / materias primas",type:"Negocio",keys:["insumo","materia prima","quimico"]},
+  {name:"Packaging - etiquetas",type:"Negocio",keys:["etiqueta","label","sticker"]},
+  {name:"Packaging - botellas y tapas",type:"Negocio",keys:["botella","tapa","envase"]},
+  {name:"Packaging - cajas",type:"Negocio",keys:["caja","carton","empaque"]},
+  {name:"Pago a proveedores",type:"Negocio",keys:["proveedor"]},
+  {name:"Importaciones",type:"Negocio",keys:["importacion","aduana"]},
+  {name:"Alquiler de local",type:"Negocio",keys:["local","almacen","taller"]},
+  {name:"Pago de planilla",type:"Negocio",keys:["planilla","trabajador","empleado"]},
+  {name:"Publicidad y marketing",type:"Negocio",keys:["publicidad","marketing","facebook","instagram"]},
+  {name:"Contadora / contabilidad",type:"Negocio",keys:["contadora","contabilidad","sunat"]},
+  {name:"Registro de marca / trámites",type:"Negocio",keys:["indecopi","marca","tramite"]},
+  {name:"Software de facturación",type:"Negocio",keys:["facturacion","nubefact"]},
+  {name:"Otros gastos del negocio",type:"Negocio",keys:["gasto negocio"]}
+];
+
+var MIC_NUMS = {
+  "un":1,"uno":1,"una":1,"dos":2,"tres":3,"cuatro":4,"cinco":5,"seis":6,"siete":7,"ocho":8,"nueve":9,
+  "diez":10,"once":11,"doce":12,"trece":13,"catorce":14,"quince":15,
+  "veinte":20,"treinta":30,"cuarenta":40,"cincuenta":50,"sesenta":60,"setenta":70,"ochenta":80,"noventa":90,
+  "cien":100,"ciento":100,"doscientos":200,"doscientas":200,"trescientos":300,"trescientas":300,
+  "cuatrocientos":400,"quinientos":500,"quinientas":500,"seiscientos":600,
+  "setecientos":700,"ochocientos":800,"novecientos":900,"novecientas":900,"mil":1000
+};
+
+function micNormalize(t) {
+  return t.toLowerCase()
+    .replace(/[aáàä]/g,"a").replace(/[eéèë]/g,"e")
+    .replace(/[iíìï]/g,"i").replace(/[oóòö]/g,"o")
+    .replace(/[uúùü]/g,"u").replace(/n~/g,"n");
+}
+
+function micGetAmount(text) {
+  var n = text.match(/\d+([.,]\d+)?/);
+  if (n) return parseFloat(n[0].replace(",","."));
+  var t = micNormalize(text);
+  var keys = Object.keys(MIC_NUMS).sort(function(a,b){return b.length-a.length;});
+  for (var i=0; i<keys.length; i++) {
+    if (t.indexOf(keys[i]) !== -1) return MIC_NUMS[keys[i]];
+  }
+  return null;
+}
+
+function micGetCategory(text, section) {
+  var t = micNormalize(text);
+  var filter = section==="ingreso" ? ["Ingreso"] : section==="layclean" ? ["Negocio"] : ["Fijo","Variable","Hormiga","Inversion"];
+  var best = null, score = 0;
+  for (var i=0; i<MIC_CATS.length; i++) {
+    var c = MIC_CATS[i];
+    if (filter.indexOf(c.type) === -1) continue;
+    for (var j=0; j<c.keys.length; j++) {
+      var k = micNormalize(c.keys[j]);
+      if (t.indexOf(k) !== -1 && k.length > score) { best = c; score = k.length; }
+    }
+  }
+  return best;
+}
+
+function micGetDesc(original, amount, cat) {
+  var d = original;
+  d = d.replace(/\d+([.,]\d+)?/g,"");
+  d = d.replace(/soles?|sol|dolares?|dolar/gi,"");
+  if (cat) {
+    for (var i=0; i<cat.keys.length; i++) {
+      try { d = d.replace(new RegExp(cat.keys[i],"gi"),""); } catch(e) {}
+    }
+  }
+  d = d.replace(/\s+/g," ").trim();
+  return d || (cat ? cat.name : "Gasto");
+}
+
+function micApplyForm(desc, amount, currency, cat, section) {
+  var fDesc = section==="egreso"?"f-desc":section==="ingreso"?"i-desc":"l-desc";
+  var fAmt  = section==="egreso"?"f-amount":section==="ingreso"?"i-amount":"l-amount";
+  var fCur  = section==="egreso"?"f-currency":section==="ingreso"?"i-currency":"l-currency";
+  var fCat  = section==="egreso"?"f-category":section==="ingreso"?"i-category":"l-category";
+  if (desc) document.getElementById(fDesc).value = desc;
+  if (amount) document.getElementById(fAmt).value = amount;
+  document.getElementById(fCur).value = currency;
+  if (cat) {
+    var sel = document.getElementById(fCat);
+    for (var i=0; i<sel.options.length; i++) {
+      if (sel.options[i].value.indexOf(cat.name+"|") === 0) {
+        sel.value = sel.options[i].value;
+        if (section==="egreso") onCategoryChange();
+        break;
+      }
+    }
+  }
+}
+
+var activeRecognition = null;
+
+function startMic(section) {
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { showToast("Micrófono no soportado"); return; }
+  var btn = document.getElementById("mic-btn-"+section);
+  var res = document.getElementById("mic-result-"+section);
+  if (activeRecognition) {
+    activeRecognition.stop(); activeRecognition = null;
+    btn.className = "mic-btn";
+    btn.innerHTML = "Dictar gasto";
+    return;
+  }
+  var r = new SR();
+  r.lang = "es-PE";
+  r.continuous = false;
+  r.interimResults = false;
+  r.maxAlternatives = 1;
+  activeRecognition = r;
+  btn.className = "mic-btn listening";
+  btn.innerHTML = "Escuchando...";
+  res.className = "mic-result show";
+  res.textContent = "Habla ahora...";
+  r.onresult = function(e) {
+    var t = e.results[0][0].transcript;
+    activeRecognition = null;
+    var cur = t.toLowerCase().indexOf("dolar") !== -1 || t.toLowerCase().indexOf("usd") !== -1 ? "USD" : "PEN";
+    var amt = micGetAmount(t);
+    var cat = micGetCategory(t, section);
+    var desc = micGetDesc(t, amt, cat);
+    micApplyForm(desc, amt, cur, cat, section);
+    var label = section==="egreso"?"gasto":section==="ingreso"?"ingreso":"gasto Layclean";
+    var info = desc + (amt ? " | " + (cur==="USD"?"$":"S/") + amt : "") + (cat ? " | " + cat.name : " | elige categoria");
+    res.textContent = info;
+    btn.className = "mic-btn success";
+    btn.innerHTML = "Listo";
+    setTimeout(function() {
+      btn.className = "mic-btn";
+      btn.innerHTML = "Dictar " + label;
+      res.className = "mic-result";
+    }, 4000);
+  };
+  r.onerror = function(e) {
+    activeRecognition = null;
+    btn.className = "mic-btn";
+    btn.innerHTML = "Dictar gasto";
+    res.textContent = e.error === "not-allowed" ? "Permite el microfono" : "Error: " + e.error;
+  };
+  r.onend = function() {
+    if (activeRecognition) { activeRecognition = null; btn.className = "mic-btn"; btn.innerHTML = "Dictar gasto"; }
+  };
+  r.start();
+  setTimeout(function() { if (activeRecognition) { activeRecognition.stop(); } }, 8000);
+}
+
+
 
 init();
 </script>
