@@ -725,7 +725,7 @@ function onCategoryChange(){
   const val=document.getElementById("f-category").value;
   const type=val.split("|")[1]||"Variable";
   const cls={"Fijo":"badge-fijo","Variable":"badge-variable","Hormiga":"badge-hormiga","Inversion":"badge-inversion"}[type]||"badge-variable";
-  document.getElementById("tipo-badge").innerHTML=`<span class="badge ${cls}">${type==="Inversion"?"Inversión":type}</span>`;
+  document.getElementById("tipo-badge").innerHTML='<span class="badge '+cls+'">'+( type==="Inversion"?"Inversión":type)+'</span>';
 }
 
 // ── ADD EXPENSE ───────────────────────────────────────────────────────────────
@@ -788,38 +788,49 @@ function showToast(msg){
 }
 
 // ── ITEM HTML ─────────────────────────────────────────────────────────────────
-function itemHTML(e,showDel=true,store="personal"){
+function itemHTML(e,showDel,store){
+  if(showDel===undefined) showDel=true;
+  if(store===undefined) store="personal";
   const sym=e.currency==="USD"?"$":"S/";
   const isInv=e.type==="Inversion";
   const isIng=e.source==="ingresos"||e.type==="Ingreso";
   const amtCls=isIng?"amt-ingreso":isInv?"amt-inversion":e.currency==="USD"?"amt-usd":"amt-pen";
-  const badgeCls=isIng?"badge-ingreso":isInv?"badge-inversion":{"Fijo":"badge-fijo","Variable":"badge-variable","Hormiga":"badge-hormiga","Negocio":"badge-negocio"}[e.type]||"badge-variable";
+  const typeMap={"Fijo":"badge-fijo","Variable":"badge-variable","Hormiga":"badge-hormiga","Negocio":"badge-negocio"};
+  const badgeCls=isIng?"badge-ingreso":isInv?"badge-inversion":(typeMap[e.type]||"badge-variable");
   const badgeLabel=isIng?"Ingreso":isInv?"Inversión":e.type;
   const emoji=EMOJIS[e.cat]||"💰";
-  const delFn=store==="layclean"?`askDeleteLay(${e.id})`:store==="ingresos"?`askDeleteIng(${e.id})`:`askDelete(${e.id})`;
-  const actionBtns=showDel?`<div id="del-${e.id}" style="display:flex;gap:1px"><button class="edit-btn" onclick="openEdit(${e.id},'${store}')">✏️</button><button class="del-btn" onclick="${delFn}">🗑</button></div>`:"";
-  return `<div class="exp-item">
-    <span class="exp-emoji">${emoji}</span>
-    <div class="exp-info">
-      <div class="exp-desc">${e.desc}</div>
-      <div class="exp-meta">${e.date} · ${e.cat}</div>
-    </div>
-    <div class="exp-right">
-      <div class="exp-amount ${amtCls}">${sym}${e.amount.toLocaleString("es-PE",{minimumFractionDigits:2})}</div>
-      <span class="badge ${badgeCls}">${badgeLabel}</span>
-    </div>
-    ${actionBtns}
-  </div>`;
+  let delFn="";
+  if(store==="layclean") delFn="askDeleteLay("+e.id+")";
+  else if(store==="ingresos") delFn="askDeleteIng("+e.id+")";
+  else delFn="askDelete("+e.id+")";
+  let actionBtns="";
+  if(showDel){
+    actionBtns='<div id="del-'+e.id+'" style="display:flex;gap:1px">'+
+      '<button class="edit-btn" onclick="openEdit('+e.id+',\''+store+'\')">✏️</button>'+
+      '<button class="del-btn" onclick="'+delFn+'">🗑</button></div>';
+  }
+  return '<div class="exp-item">'+
+    '<span class="exp-emoji">'+emoji+'</span>'+
+    '<div class="exp-info">'+
+      '<div class="exp-desc">'+e.desc+'</div>'+
+      '<div class="exp-meta">'+e.date+' · '+e.cat+'</div>'+
+    '</div>'+
+    '<div class="exp-right">'+
+      '<div class="exp-amount '+amtCls+'">'+sym+e.amount.toLocaleString("es-PE",{minimumFractionDigits:2})+'</div>'+
+      '<span class="badge '+badgeCls+'">'+badgeLabel+'</span>'+
+    '</div>'+
+    actionBtns+
+  '</div>';
 }
 
 // ── DELETE ────────────────────────────────────────────────────────────────────
-function askDelete(id){const el=document.getElementById("del-"+id);if(!el)return;el.innerHTML=`<div class="del-actions"><button class="btn-danger" onclick="confirmDelete(${id})">✓</button><button class="btn-cancel" onclick="cancelDelete(${id})">✗</button></div>`;}
+function askDelete(id){const el=document.getElementById("del-"+id);if(!el)return;el.innerHTML='<div class="del-actions"><button class="btn-danger" onclick="confirmDelete('+id+')">✓</button><button class="btn-cancel" onclick="cancelDelete('+id+')">✗</button></div>';}
 function confirmDelete(id){expenses=expenses.filter(e=>e.id!==id);save();syncToCloud("delete",{id,store:"personal"});updateCount();renderRecent();renderHistorial();renderDashboard();}
-function askDeleteLay(id){const el=document.getElementById("del-"+id);if(!el)return;el.innerHTML=`<div class="del-actions"><button class="btn-danger" onclick="confirmDeleteLay(${id})">✓</button><button class="btn-cancel" onclick="cancelDelete(${id})">✗</button></div>`;}
+function askDeleteLay(id){const el=document.getElementById("del-"+id);if(!el)return;el.innerHTML='<div class="del-actions"><button class="btn-danger" onclick="confirmDeleteLay('+id+')">✓</button><button class="btn-cancel" onclick="cancelDelete('+id+')">✗</button></div>';}
 function confirmDeleteLay(id){layExpenses=layExpenses.filter(e=>e.id!==id);save();syncToCloud("delete",{id,store:"layclean"});updateCount();renderLayclean();renderHistorial();renderDashboard();}
-function askDeleteIng(id){const el=document.getElementById("del-"+id);if(!el)return;el.innerHTML=`<div class="del-actions"><button class="btn-danger" onclick="confirmDeleteIng(${id})">✓</button><button class="btn-cancel" onclick="cancelDelete(${id})">✗</button></div>`;}
+function askDeleteIng(id){const el=document.getElementById("del-"+id);if(!el)return;el.innerHTML='<div class="del-actions"><button class="btn-danger" onclick="confirmDeleteIng('+id+')">✓</button><button class="btn-cancel" onclick="cancelDelete('+id+')">✗</button></div>';}
 function confirmDeleteIng(id){ingresos=ingresos.filter(e=>e.id!==id);save();syncToCloud("delete",{id,store:"ingresos"});updateCount();renderIngresos();renderHistorial();renderDashboard();}
-function cancelDelete(id){const el=document.getElementById("del-"+id);if(el)el.innerHTML=`<div style="display:flex;gap:1px"><button class="edit-btn" onclick="openEdit(${id},'personal')">✏️</button><button class="del-btn" onclick="askDelete(${id})">🗑</button></div>`;}
+function cancelDelete(id){const el=document.getElementById("del-"+id);if(el)el.innerHTML='<div style="display:flex;gap:1px"><button class="edit-btn" onclick="openEdit('+id+',\'personal\')">✏️</button><button class="del-btn" onclick="askDelete('+id+')">🗑</button></div>';}
 
 // ── EDIT ──────────────────────────────────────────────────────────────────────
 function openEdit(id,store){
@@ -866,60 +877,66 @@ function renderHistorial(){
   const month=document.getElementById("h-month").value;
   const source=document.getElementById("h-source").value;
   let all=[];
-  if(source==="all"||source==="personal") all=all.concat(expenses.filter(e=>e.month===month));
-  if(source==="all"||source==="ingresos") all=all.concat(ingresos.filter(e=>e.month===month));
-  if(source==="all"||source==="layclean") all=all.concat(layExpenses.filter(e=>e.month===month));
-  all.sort((a,b)=>b.date.localeCompare(a.date));
+  if(source==="all"||source==="personal") all=all.concat(expenses.filter(function(e){return e.month===month;}));
+  if(source==="all"||source==="ingresos") all=all.concat(ingresos.filter(function(e){return e.month===month;}));
+  if(source==="all"||source==="layclean") all=all.concat(layExpenses.filter(function(e){return e.month===month;}));
+  all.sort(function(a,b){return b.date.localeCompare(a.date);});
   const el=document.getElementById("historial-content");
-  if(!all.length){el.innerHTML=`<div class="card empty"><div class="empty-icon">📭</div><div class="empty-text">Sin registros en ${month}</div></div>`;return;}
-  el.innerHTML=`<div class="card">${all.map(e=>itemHTML(e,true,e.source||"personal")).join("")}</div>`;
+  if(!all.length){el.innerHTML='<div class="card empty"><div class="empty-icon">📭</div><div class="empty-text">Sin registros en '+month+'</div></div>';return;}
+  el.innerHTML='<div class="card">'+all.map(function(e){return itemHTML(e,true,e.source||"personal");}).join("")+'</div>';
 }
 
-// ── RENDER INGRESOS ───────────────────────────────────────────────────────────
+// ── RENDER INGRESOS ─────────────────────────────────────────────────────────
 function renderIngresos(){
   const month=document.getElementById("ing-month").value;
-  const filtered=ingresos.filter(e=>e.month===month);
+  const filtered=ingresos.filter(function(e){return e.month===month;});
   const el=document.getElementById("ingresos-content");
-  if(!filtered.length){el.innerHTML=`<div class="card empty"><div class="empty-icon">💵</div><div class="empty-text">Sin ingresos en ${month}</div></div>`;return;}
-  const pen=filtered.filter(e=>e.currency==="PEN").reduce((s,e)=>s+e.amount,0);
-  const usd=filtered.filter(e=>e.currency==="USD").reduce((s,e)=>s+e.amount,0);
-  const fmt=n=>n.toLocaleString("es-PE",{minimumFractionDigits:2,maximumFractionDigits:2});
-  const byCat={};filtered.forEach(e=>{if(e.currency==="PEN")byCat[e.cat]=(byCat[e.cat]||0)+e.amount;});
-  const topHTML=Object.entries(byCat).sort((a,b)=>b[1]-a[1]).map(([cat,amt])=>{
+  if(!filtered.length){el.innerHTML='<div class="card empty"><div class="empty-icon">💵</div><div class="empty-text">Sin ingresos en '+month+'</div></div>';return;}
+  const pen=filtered.filter(function(e){return e.currency==="PEN";}).reduce(function(s,e){return s+e.amount;},0);
+  const usd=filtered.filter(function(e){return e.currency==="USD";}).reduce(function(s,e){return s+e.amount;},0);
+  const fmt=function(n){return n.toLocaleString("es-PE",{minimumFractionDigits:2,maximumFractionDigits:2});};
+  const byCat={};filtered.forEach(function(e){if(e.currency==="PEN")byCat[e.cat]=(byCat[e.cat]||0)+e.amount;});
+  let topHTML="";
+  Object.entries(byCat).sort(function(a,b){return b[1]-a[1];}).forEach(function(entry){
+    const cat=entry[0],amt=entry[1];
     const p=pen>0?(amt/pen)*100:0;
-    return `<div class="prog-wrap"><div class="prog-header"><span class="prog-name">${EMOJIS[cat]||"💰"} ${cat}</span><span class="prog-amt" style="color:#a0f0ea">S/${fmt(amt)}</span></div><div class="prog-bar"><div class="prog-fill pf-cyan" style="width:${Math.min(p,100)}%"></div></div></div>`;
-  }).join("");
-  el.innerHTML=`
-    <div class="kpi-grid">
-      <div class="kpi income"><div class="kpi-label">Ingresos Soles</div><div class="kpi-val">S/${fmt(pen)}</div></div>
-      <div class="kpi income"><div class="kpi-label">Ingresos Dólares</div><div class="kpi-val">$${fmt(usd)}</div></div>
-    </div>
-    ${byCat?`<div class="card"><p class="sec-title">Por fuente</p>${topHTML}</div>`:""}
-    <div class="card">${filtered.map(e=>itemHTML(e,true,"ingresos")).join("")}</div>`;
+    topHTML+='<div class="prog-wrap"><div class="prog-header"><span class="prog-name">'+(EMOJIS[cat]||"💰")+" "+cat+'</span><span class="prog-amt" style="color:#58ffb4">S/'+fmt(amt)+'</span></div><div class="prog-bar"><div class="prog-fill pf-cyan" style="width:'+Math.min(p,100)+'%"></div></div></div>';
+  });
+  let html='';
+  html+='<div class="kpi-grid">';
+  html+='<div class="kpi income"><div class="kpi-label">Ingresos Soles</div><div class="kpi-val">S/'+fmt(pen)+'</div></div>';
+  html+='<div class="kpi income"><div class="kpi-label">Ingresos Dólares</div><div class="kpi-val">$'+fmt(usd)+'</div></div>';
+  html+='</div>';
+  if(topHTML) html+='<div class="card"><p class="sec-title">Por fuente</p>'+topHTML+'</div>';
+  html+='<div class="card">'+filtered.map(function(e){return itemHTML(e,true,"ingresos");}).join("")+'</div>';
+  el.innerHTML=html;
 }
 
-// ── RENDER LAYCLEAN ───────────────────────────────────────────────────────────
+// ── RENDER LAYCLEAN ──────────────────────────────────────────────────────────
 function renderLayclean(){
   const month=document.getElementById("l-month").value;
-  const filtered=layExpenses.filter(e=>e.month===month);
+  const filtered=layExpenses.filter(function(e){return e.month===month;});
   const el=document.getElementById("layclean-content");
-  if(!filtered.length){el.innerHTML=`<div class="card empty"><div class="empty-icon">🫧</div><div class="empty-text">Sin gastos de Layclean en ${month}</div></div>`;return;}
-  const pen=filtered.filter(e=>e.currency==="PEN").reduce((s,e)=>s+e.amount,0);
-  const usd=filtered.filter(e=>e.currency==="USD").reduce((s,e)=>s+e.amount,0);
-  const fmt=n=>n.toLocaleString("es-PE",{minimumFractionDigits:2,maximumFractionDigits:2});
-  const byCat={};filtered.forEach(e=>{if(e.currency==="PEN")byCat[e.cat]=(byCat[e.cat]||0)+e.amount;});
-  const topHTML=Object.entries(byCat).sort((a,b)=>b[1]-a[1]).map(([cat,amt])=>{
+  if(!filtered.length){el.innerHTML='<div class="card empty"><div class="empty-icon">🫧</div><div class="empty-text">Sin gastos de Layclean en '+month+'</div></div>';return;}
+  const pen=filtered.filter(function(e){return e.currency==="PEN";}).reduce(function(s,e){return s+e.amount;},0);
+  const usd=filtered.filter(function(e){return e.currency==="USD";}).reduce(function(s,e){return s+e.amount;},0);
+  const fmt=function(n){return n.toLocaleString("es-PE",{minimumFractionDigits:2,maximumFractionDigits:2});};
+  const byCat={};filtered.forEach(function(e){if(e.currency==="PEN")byCat[e.cat]=(byCat[e.cat]||0)+e.amount;});
+  let topHTML="";
+  Object.entries(byCat).sort(function(a,b){return b[1]-a[1];}).forEach(function(entry){
+    const cat=entry[0],amt=entry[1];
     const p=pen>0?(amt/pen)*100:0;
-    return `<div class="prog-wrap"><div class="prog-header"><span class="prog-name">${EMOJIS[cat]||"📦"} ${cat}</span><span class="prog-amt" style="color:#37D1BF">S/${fmt(amt)}</span></div><div class="prog-bar"><div class="prog-fill pf-teal" style="width:${Math.min(p,100)}%"></div></div></div>`;
-  }).join("");
-  el.innerHTML=`
-    <div class="kpi-grid">
-      <div class="kpi layclean-kpi"><div class="kpi-label">Gastos Soles</div><div class="kpi-val">S/${fmt(pen)}</div></div>
-      <div class="kpi layclean-kpi"><div class="kpi-label">Gastos Dólares</div><div class="kpi-val">$${fmt(usd)}</div></div>
-    </div>
-    ${Object.keys(byCat).length?`<div class="card"><p class="sec-title">Por categoría</p>${topHTML}</div>`:""}
-    <div class="card">${filtered.map(e=>itemHTML(e,true,"layclean")).join("")}</div>
-    <button class="btn-ghost" style="width:100%;margin-top:4px" onclick="exportLayclean()">⬇️ Exportar Layclean CSV</button>`;
+    topHTML+='<div class="prog-wrap"><div class="prog-header"><span class="prog-name">'+(EMOJIS[cat]||"📦")+" "+cat+'</span><span class="prog-amt" style="color:#7dd4a0">S/'+fmt(amt)+'</span></div><div class="prog-bar"><div class="prog-fill pf-teal" style="width:'+Math.min(p,100)+'%"></div></div></div>';
+  });
+  let html='';
+  html+='<div class="kpi-grid">';
+  html+='<div class="kpi layclean-kpi"><div class="kpi-label">Gastos Soles</div><div class="kpi-val">S/'+fmt(pen)+'</div></div>';
+  html+='<div class="kpi layclean-kpi"><div class="kpi-label">Gastos Dólares</div><div class="kpi-val">$'+fmt(usd)+'</div></div>';
+  html+='</div>';
+  if(topHTML) html+='<div class="card"><p class="sec-title">Por categoría</p>'+topHTML+'</div>';
+  html+='<div class="card">'+filtered.map(function(e){return itemHTML(e,true,"layclean");}).join("")+'</div>';
+  html+='<button class="btn-ghost" style="width:100%;margin-top:4px" onclick="exportLayclean()">⬇️ Exportar Layclean CSV</button>';
+  el.innerHTML=html;
 }
 
 // ── RENDER DASHBOARD ──────────────────────────────────────────────────────────
@@ -1037,14 +1054,14 @@ function showTab(tab){
 // ── EXPORT ────────────────────────────────────────────────────────────────────
 function buildCSV(data){
   const h="Fecha,Mes,Descripción,Categoría,Tipo,Monto,Moneda,Origen\n";
-  const r=data.map(e=>`${e.date},${e.month},"${e.desc}","${e.cat}",${e.type},${e.amount},${e.currency},${e.source||"personal"}`).join("\n");
+  const r=data.map(e=>e.date+","+e.month+',"'+ e.desc+'","'+ e.cat+'",'+e.type+","+e.amount+","+e.currency+","+(e.source||"personal")).join("\n");
   return h+r;
 }
 function exportAll(){doExport([...expenses,...ingresos,...layExpenses]);}
 function exportLayclean(){doExport(layExpenses);}
 function doExport(data){
   const csv=buildCSV(data);
-  const fn=`MisGastosDavis_${new Date().toISOString().slice(0,7)}.csv`;
+  const fn="MisGastosDavis_"+new Date().toISOString().slice(0,7)+".csv";
   if(navigator.canShare){const f=new File([csv],fn,{type:"text/csv"});if(navigator.canShare({files:[f]})){navigator.share({files:[f],title:"Mis Gastos Davis"}).catch(()=>exportFallback(csv));return;}}
   try{const a=document.createElement("a");a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(csv);a.download=fn;a.style.display="none";document.body.appendChild(a);a.click();document.body.removeChild(a);return;}catch{}
   try{window.open("data:text/csv;charset=utf-8,"+encodeURIComponent(csv),"_blank");return;}catch{}
@@ -1053,7 +1070,7 @@ function doExport(data){
 function exportFallback(csv){
   let m=document.getElementById("export-modal");
   if(!m){m=document.createElement("div");m.id="export-modal";m.style.cssText="position:fixed;inset:0;background:#000000bb;z-index:9999;display:flex;align-items:flex-end;padding:12px";document.body.appendChild(m);}
-  m.innerHTML=`<div style="background:#0f1623;border:1px solid #1c2333;border-radius:18px;padding:20px;width:100%;display:flex;flex-direction:column;gap:11px"><div style="display:flex;justify-content:space-between"><span style="font-weight:700;font-size:14px">📋 Exportar datos</span><button onclick="document.getElementById('export-modal').style.display='none'" style="background:none;border:none;color:#8b949e;font-size:22px;cursor:pointer">✕</button></div><textarea readonly style="height:100px;background:#070c14;border:1px solid #1c2333;border-radius:9px;color:#e6edf3;font-size:11px;padding:10px;resize:none;font-family:monospace">${csv}</textarea><button onclick="copyCSV()" style="width:100%;padding:13px;border-radius:10px;border:none;background:linear-gradient(135deg,#1a6fd4,#0d4fa3);color:#fff;font-size:14px;font-weight:700;cursor:pointer">📋 Copiar al portapapeles</button></div>`;
+  m.innerHTML='<div style="background:#0f1623;border:1px solid #1c2333;border-radius:18px;padding:20px;width:100%;display:flex;flex-direction:column;gap:11px"><div style="display:flex;justify-content:space-between"><span style="font-weight:700;font-size:14px">📋 Exportar datos</span><button onclick="document.getElementById(\'export-modal\').style.display=\'none\'" style="background:none;border:none;color:#8b949e;font-size:22px;cursor:pointer">✕</button></div><textarea readonly style="height:100px;background:#070c14;border:1px solid #1c2333;border-radius:9px;color:#e6edf3;font-size:11px;padding:10px;resize:none;font-family:monospace">${csv}</textarea><button onclick="copyCSV()" style="width:100%;padding:13px;border-radius:10px;border:none;background:linear-gradient(135deg,#1a6fd4,#0d4fa3);color:#fff;font-size:14px;font-weight:700;cursor:pointer">📋 Copiar al portapapeles</button></div>';
   m.style.display="flex";window._exportCSVText=csv;
 }
 function copyCSV(){
@@ -1165,6 +1182,126 @@ function renderAnnual() {
   html += '</div>';
 
   el.innerHTML = html;
+}
+
+
+
+const WORD_NUMBERS = {
+  "cero":0,"un":1,"uno":1,"una":1,"dos":2,"tres":3,"cuatro":4,"cinco":5,"seis":6,"siete":7,"ocho":8,"nueve":9,
+  "diez":10,"once":11,"doce":12,"trece":13,"catorce":14,"quince":15,"dieciseis":16,"diecisiete":17,"dieciocho":18,"diecinueve":19,
+  "veinte":20,"veintiuno":21,"veintidos":22,"veintitres":23,"veinticuatro":24,"veinticinco":25,"veintiseis":26,"veintisiete":27,"veintiocho":28,"veintinueve":29,
+  "treinta":30,"cuarenta":40,"cincuenta":50,"sesenta":60,"setenta":70,"ochenta":80,"noventa":90,
+  "cien":100,"ciento":100,"doscientos":200,"doscientas":200,"trescientos":300,"trescientas":300,
+  "cuatrocientos":400,"cuatrocientas":400,"quinientos":500,"quinientas":500,"seiscientos":600,"seiscientas":600,
+  "setecientos":700,"setecientas":700,"ochocientos":800,"ochocientas":800,"novecientos":900,"novecientas":900,
+  "mil":1000,"dos mil":2000,"tres mil":3000,"cuatro mil":4000,"cinco mil":5000,
+  "diez mil":10000,"veinte mil":20000,"treinta mil":30000,"cincuenta mil":50000,"cien mil":100000
+};
+
+function wordsToNumber(text) {
+  var result = null;
+  var entries = Object.entries(WORD_NUMBERS).sort(function(a,b){return b[0].length-a[0].length;});
+  var modified = text;
+  for (var i=0; i<entries.length; i++) {
+    var word = entries[i][0], val = entries[i][1];
+    if (modified.indexOf(word) !== -1) {
+      modified = modified.replace(new RegExp(" "+word+" ","gi"), " "+val+" ");
+      modified = modified.replace(new RegExp("^"+word+" ","i"), val+" ");
+      modified = modified.replace(new RegExp(" "+word+"$","i"), " "+val);
+    }
+  }
+  var nums = modified.match(/[0-9]+([.,][0-9]+)?/g);
+  if (nums && nums.length) {
+    if (nums.length === 1) return parseFloat(nums[0].replace(",","."));
+    var total = 0;
+    for (var j=0; j<nums.length; j++) total += parseFloat(nums[j].replace(",","."));
+    return total;
+  }
+  return null;
+}
+
+function extractDescription(text, amount, category) {
+  var desc = text;
+  desc = desc.replace(/[0-9]+([.,][0-9]+)?/g, "");
+  var words = Object.keys(WORD_NUMBERS);
+  for (var i=0; i<words.length; i++) {
+    try { desc = desc.replace(new RegExp(" "+words[i]+" ","gi")," "); } catch(e){}
+  }
+  desc = desc.replace(/soles?|sol|dolares?|dolar|pen|usd|verdes?/gi, "");
+  if (category) {
+    for (var j=0; j<category.keys.length; j++) {
+      try { desc = desc.replace(new RegExp(category.keys[j],"gi"),""); } catch(e){}
+    }
+  }
+  desc = desc.replace(/  +/g," ").trim();
+  return desc || (category ? category.name : "Gasto");
+}
+
+function applyToForm(parsed, section) {
+  if (section === "egreso") {
+    if (parsed.desc) document.getElementById("f-desc").value = parsed.desc;
+    if (parsed.amount) document.getElementById("f-amount").value = parsed.amount;
+    document.getElementById("f-currency").value = parsed.currency;
+    if (parsed.category) {
+      var sel = document.getElementById("f-category");
+      for (var i=0; i<sel.options.length; i++) {
+        if (sel.options[i].value.indexOf(parsed.category.name+"|") === 0) {
+          sel.value = sel.options[i].value; onCategoryChange(); break;
+        }
+      }
+    }
+  } else if (section === "ingreso") {
+    if (parsed.desc) document.getElementById("i-desc").value = parsed.desc;
+    if (parsed.amount) document.getElementById("i-amount").value = parsed.amount;
+    document.getElementById("i-currency").value = parsed.currency;
+    if (parsed.category) {
+      var sel2 = document.getElementById("i-category");
+      for (var i=0; i<sel2.options.length; i++) {
+        if (sel2.options[i].value.indexOf(parsed.category.name+"|") === 0) { sel2.value = sel2.options[i].value; break; }
+      }
+    }
+  } else if (section === "layclean") {
+    if (parsed.desc) document.getElementById("l-desc").value = parsed.desc;
+    if (parsed.amount) document.getElementById("l-amount").value = parsed.amount;
+    document.getElementById("l-currency").value = parsed.currency;
+    if (parsed.category) {
+      var sel3 = document.getElementById("l-category");
+      for (var i=0; i<sel3.options.length; i++) {
+        if (sel3.options[i].value.indexOf(parsed.category.name+"|") === 0) { sel3.value = sel3.options[i].value; break; }
+      }
+    }
+  }
+}
+
+function parseSpeech(transcript, section) {
+  const text = transcript.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
+  const amount = wordsToNumber(text);
+  const currency = detectCurrency(text);
+  const category = detectCategory(text, section);
+  const desc = extractDescription(transcript, amount, category);
+  return { desc:desc, amount:amount, currency:currency, category:category };
+}
+
+function detectCurrency(text) {
+  if (text.includes("dolar") || text.includes("usd") || text.includes("verde")) return "USD";
+  return "PEN";
+}
+
+function detectCategory(text, section) {
+  const lower = text.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+  let best = null, bestScore = 0;
+  const typeFilter = section === "ingreso" ? ["Ingreso"] : section === "layclean" ? ["Negocio"] : ["Fijo","Variable","Hormiga","Inversion"];
+  for (let i = 0; i < ALL_CATEGORIES.length; i++) {
+    const cat = ALL_CATEGORIES[i];
+    if (typeFilter.indexOf(cat.type) === -1) continue;
+    for (let j = 0; j < cat.keys.length; j++) {
+      const k = cat.keys[j].normalize("NFD").replace(/[̀-ͯ]/g, "");
+      if (lower.indexOf(k) !== -1 && k.length > bestScore) {
+        best = cat; bestScore = k.length;
+      }
+    }
+  }
+  return best;
 }
 
 let activeRecognition = null;
