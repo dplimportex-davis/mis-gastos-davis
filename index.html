@@ -1174,14 +1174,17 @@ function renderDashboard(){
 
 // ── TABS ──────────────────────────────────────────────────────────────────────
 function showTab(tab){
-  ["dashboard","registro","ingresos","historial","layclean"].forEach(t=>{
-    document.getElementById("panel-"+t).style.display=t===tab?"block":"none";
-    document.getElementById("tab-"+t).classList.toggle("active",t===tab);
+  ["dashboard","registro","ingresos","historial","layclean","layclean-ing"].forEach(function(t){
+    const panel=document.getElementById("panel-"+t);
+    if(panel) panel.style.display=t===tab?"block":"none";
+    const tabEl=document.getElementById("tab-"+t);
+    if(tabEl) tabEl.classList.toggle("active",t===tab);
     const side=document.getElementById("side-"+t);
     if(side) side.classList.toggle("active",t===tab);
   });
   if(tab==="historial") renderHistorial();
   if(tab==="layclean") renderLayclean();
+  if(tab==="layclean-ing") renderLaycleanIng();
   if(tab==="ingresos") renderIngresos();
   if(tab==="dashboard") renderDashboard();
 }
