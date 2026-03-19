@@ -1271,33 +1271,34 @@ function micNormalize(t) {
 }
 
 function micGetAmount(text) {
-  // First try direct number in text
-  var n = text.match(/\d+([.,]\d+)?/);
-  if (n) return parseFloat(n[0].replace(",","."));
-  // Try word numbers - normalize first
   var t = micNormalize(text);
-  // Try compound numbers first (e.g. "ciento veinte" = 120)
-  var total = 0;
-  var found = false;
-  var remaining = t;
+
+  // Pattern: "10 mil", "5 mil", "2 mil 500", "10 mil 500"
+  var milMatch = t.match(/(\d+)\s*mil(?:\s+(\d+))?/);
+  if (milMatch) {
+    var base = parseInt(milMatch[1]) * 1000;
+    var extra = milMatch[2] ? parseInt(milMatch[2]) : 0;
+    return base + extra;
+  }
+
+  // Pattern: "diez mil", "cinco mil", etc.
+  var wordMilMatch = t.match(/(uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|once|doce|quince|veinte|treinta|cuarenta|cincuenta)\s*mil/);
+  if (wordMilMatch) {
+    var wordMap = {uno:1,dos:2,tres:3,cuatro:4,cinco:5,seis:6,siete:7,ocho:8,nueve:9,
+      diez:10,once:11,doce:12,quince:15,veinte:20,treinta:30,cuarenta:40,cincuenta:50};
+    return (wordMap[wordMilMatch[1]] || 1) * 1000;
+  }
+
+  // Direct number in text (e.g. "10", "150", "1500")
+  var numMatch = t.match(/\d+([.,]\d+)?/);
+  if (numMatch) return parseFloat(numMatch[0].replace(",","."));
+
+  // Single word numbers
   var keys = Object.keys(MIC_NUMS).sort(function(a,b){return b.length-a.length;});
   for (var i=0; i<keys.length; i++) {
-    var k = keys[i];
-    if (remaining.indexOf(k) !== -1) {
-      var val = MIC_NUMS[k];
-      // Handle "mil" multiplier
-      if (k === "mil" && total > 0) {
-        total = total * 1000;
-      } else if (k === "mil") {
-        total = 1000;
-      } else {
-        total += val;
-      }
-      remaining = remaining.replace(k, " ");
-      found = true;
-    }
+    if (t.indexOf(keys[i]) !== -1) return MIC_NUMS[keys[i]];
   }
-  return found ? total : null;
+  return null;
 }
 
 function micGetCategory(text, section) {
@@ -1316,19 +1317,27 @@ function micGetCategory(text, section) {
 }
 
 function micGetDesc(original, amount, cat) {
+  // Proper nouns to ALWAYS keep in description
+  var keepWords = ["bcp","scotiabank","interbank","bbva","pichincha","banbif","mibanco",
+    "ripley","saga","falabella","visa","mastercard","american express","amex",
+    "hapi","layclean","hollydent","netflix","spotify","amazon","disney","youtube",
+    "movistar","claro","entel","bitel","rappi","uber","yape","plin"];
+
   var d = original;
   // Remove numeric digits
   d = d.replace(/\d+([.,]\d+)?/g, "");
   // Remove currency words
   d = d.replace(/soles?|sol|dolares?|dolar/gi, "");
-  // Remove number words
+  // Remove number words and filler words
   var numWords = ["cien","ciento","doscientos","doscientas","trescientos","trescientas",
     "cuatrocientos","quinientos","quinientas","seiscientos","setecientos","ochocientos",
-    "novecientos","novecientas","mil","dos mil","tres mil","cuatro mil","cinco mil",
-    "cero","veinte","treinta","cuarenta","cincuenta","sesenta","setenta","ochenta","noventa",
+    "novecientos","novecientas","diez mil","veinte mil","treinta mil","cincuenta mil",
+    "dos mil","tres mil","cuatro mil","cinco mil","seis mil","siete mil","ocho mil","nueve mil","diez mil",
+    "mil","cero","veinte","treinta","cuarenta","cincuenta","sesenta","setenta","ochenta","noventa",
     "veintiuno","veintidos","veintitres","veinticuatro","veinticinco","veintiseis",
     "veintisiete","veintiocho","veintinueve",
-    "diez","once","doce","trece","catorce","quince"];
+    "diez","once","doce","trece","catorce","quince",
+    "por recibo","por honorario","recibo","honorario","pago por"];
   for (var j = 0; j < numWords.length; j++) {
     d = d.replace(new RegExp("\b" + numWords[j] + "\b", "gi"), " ");
   }
@@ -1346,8 +1355,15 @@ function micGetDesc(original, amount, cat) {
         matchedPos = pos;
       }
     }
-    // Only remove if keyword appears at the end (last 40% of string)
-    if (matchedKey && matchedPos > d.length * 0.5) {
+    // Only remove if keyword appears at the end (last 50% of string)
+    // AND the keyword is not a proper noun we want to keep
+    var isKeepWord = false;
+    for (var ki=0; ki<keepWords.length; ki++) {
+      if (micNormalize(matchedKey).indexOf(micNormalize(keepWords[ki])) !== -1) {
+        isKeepWord = true; break;
+      }
+    }
+    if (matchedKey && matchedPos > d.length * 0.5 && !isKeepWord) {
       d = d.substring(0, matchedPos).trim();
     }
   }
@@ -1515,33 +1531,34 @@ function micNormalize(t) {
 }
 
 function micGetAmount(text) {
-  // First try direct number in text
-  var n = text.match(/\d+([.,]\d+)?/);
-  if (n) return parseFloat(n[0].replace(",","."));
-  // Try word numbers - normalize first
   var t = micNormalize(text);
-  // Try compound numbers first (e.g. "ciento veinte" = 120)
-  var total = 0;
-  var found = false;
-  var remaining = t;
+
+  // Pattern: "10 mil", "5 mil", "2 mil 500", "10 mil 500"
+  var milMatch = t.match(/(\d+)\s*mil(?:\s+(\d+))?/);
+  if (milMatch) {
+    var base = parseInt(milMatch[1]) * 1000;
+    var extra = milMatch[2] ? parseInt(milMatch[2]) : 0;
+    return base + extra;
+  }
+
+  // Pattern: "diez mil", "cinco mil", etc.
+  var wordMilMatch = t.match(/(uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|once|doce|quince|veinte|treinta|cuarenta|cincuenta)\s*mil/);
+  if (wordMilMatch) {
+    var wordMap = {uno:1,dos:2,tres:3,cuatro:4,cinco:5,seis:6,siete:7,ocho:8,nueve:9,
+      diez:10,once:11,doce:12,quince:15,veinte:20,treinta:30,cuarenta:40,cincuenta:50};
+    return (wordMap[wordMilMatch[1]] || 1) * 1000;
+  }
+
+  // Direct number in text (e.g. "10", "150", "1500")
+  var numMatch = t.match(/\d+([.,]\d+)?/);
+  if (numMatch) return parseFloat(numMatch[0].replace(",","."));
+
+  // Single word numbers
   var keys = Object.keys(MIC_NUMS).sort(function(a,b){return b.length-a.length;});
   for (var i=0; i<keys.length; i++) {
-    var k = keys[i];
-    if (remaining.indexOf(k) !== -1) {
-      var val = MIC_NUMS[k];
-      // Handle "mil" multiplier
-      if (k === "mil" && total > 0) {
-        total = total * 1000;
-      } else if (k === "mil") {
-        total = 1000;
-      } else {
-        total += val;
-      }
-      remaining = remaining.replace(k, " ");
-      found = true;
-    }
+    if (t.indexOf(keys[i]) !== -1) return MIC_NUMS[keys[i]];
   }
-  return found ? total : null;
+  return null;
 }
 
 function micGetCategory(text, section) {
@@ -1560,19 +1577,27 @@ function micGetCategory(text, section) {
 }
 
 function micGetDesc(original, amount, cat) {
+  // Proper nouns to ALWAYS keep in description
+  var keepWords = ["bcp","scotiabank","interbank","bbva","pichincha","banbif","mibanco",
+    "ripley","saga","falabella","visa","mastercard","american express","amex",
+    "hapi","layclean","hollydent","netflix","spotify","amazon","disney","youtube",
+    "movistar","claro","entel","bitel","rappi","uber","yape","plin"];
+
   var d = original;
   // Remove numeric digits
   d = d.replace(/\d+([.,]\d+)?/g, "");
   // Remove currency words
   d = d.replace(/soles?|sol|dolares?|dolar/gi, "");
-  // Remove number words
+  // Remove number words and filler words
   var numWords = ["cien","ciento","doscientos","doscientas","trescientos","trescientas",
     "cuatrocientos","quinientos","quinientas","seiscientos","setecientos","ochocientos",
-    "novecientos","novecientas","mil","dos mil","tres mil","cuatro mil","cinco mil",
-    "cero","veinte","treinta","cuarenta","cincuenta","sesenta","setenta","ochenta","noventa",
+    "novecientos","novecientas","diez mil","veinte mil","treinta mil","cincuenta mil",
+    "dos mil","tres mil","cuatro mil","cinco mil","seis mil","siete mil","ocho mil","nueve mil","diez mil",
+    "mil","cero","veinte","treinta","cuarenta","cincuenta","sesenta","setenta","ochenta","noventa",
     "veintiuno","veintidos","veintitres","veinticuatro","veinticinco","veintiseis",
     "veintisiete","veintiocho","veintinueve",
-    "diez","once","doce","trece","catorce","quince"];
+    "diez","once","doce","trece","catorce","quince",
+    "por recibo","por honorario","recibo","honorario","pago por"];
   for (var j = 0; j < numWords.length; j++) {
     d = d.replace(new RegExp("\b" + numWords[j] + "\b", "gi"), " ");
   }
@@ -1590,8 +1615,15 @@ function micGetDesc(original, amount, cat) {
         matchedPos = pos;
       }
     }
-    // Only remove if keyword appears at the end (last 40% of string)
-    if (matchedKey && matchedPos > d.length * 0.5) {
+    // Only remove if keyword appears at the end (last 50% of string)
+    // AND the keyword is not a proper noun we want to keep
+    var isKeepWord = false;
+    for (var ki=0; ki<keepWords.length; ki++) {
+      if (micNormalize(matchedKey).indexOf(micNormalize(keepWords[ki])) !== -1) {
+        isKeepWord = true; break;
+      }
+    }
+    if (matchedKey && matchedPos > d.length * 0.5 && !isKeepWord) {
       d = d.substring(0, matchedPos).trim();
     }
   }
