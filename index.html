@@ -801,7 +801,7 @@ async function loadFromCloud(){
     if(data.ingresos) ingresos=data.ingresos.map(e=>({...e,id:Number(e.id),amount:Number(e.amount)}));
     if(data.lay_ing) layIngresos=data.lay_ing.map(e=>({...e,id:Number(e.id),amount:Number(e.amount)}));
     save();showSync("☁️ Sincronizado",true);
-    updateCount();renderDashboard();renderRecent();renderHistorial();renderLayclean();renderIngresos();
+    updateCount();renderDashboard();renderRecent();renderHistorial();renderLayclean();renderLaycleanIng();renderIngresos();
   }catch{showSync("📴 Sin conexión",false);}
 }
 
@@ -921,7 +921,18 @@ function askDeleteLay(id){const el=document.getElementById("del-"+id);if(!el)ret
 function confirmDeleteLay(id){layExpenses=layExpenses.filter(e=>e.id!==id);save();syncToCloud("delete",{id,store:"layclean"});updateCount();renderLayclean();renderHistorial();renderDashboard();}
 function askDeleteIng(id){const el=document.getElementById("del-"+id);if(!el)return;el.innerHTML='<div class="del-actions"><button class="btn-danger" onclick="confirmDeleteIng('+id+')">✓</button><button class="btn-cancel" onclick="cancelDelete('+id+')">✗</button></div>';}
 function confirmDeleteIng(id){ingresos=ingresos.filter(e=>e.id!==id);save();syncToCloud("delete",{id,store:"ingresos"});updateCount();renderIngresos();renderHistorial();renderDashboard();}
-function cancelDelete(id){const el=document.getElementById("del-"+id);if(el)el.innerHTML='<div style="display:flex;gap:1px"><button class="edit-btn" onclick="openEdit('+id+',\'personal\')">✏️</button><button class="del-btn" onclick="askDelete('+id+')">🗑</button></div>';}
+function cancelDelete(id){
+  const el=document.getElementById("del-"+id);
+  if(!el) return;
+  // Find which store this item belongs to
+  const inExp=expenses.find(function(e){return e.id===id;});
+  const inLay=layExpenses.find(function(e){return e.id===id;});
+  const inIng=ingresos.find(function(e){return e.id===id;});
+  const inLayIng=layIngresos.find(function(e){return e.id===id;});
+  const store=inLay?"layclean":inIng?"ingresos":inLayIng?"lay_ing":"personal";
+  const delFn=inLay?"askDeleteLay("+id+")":inIng?"askDeleteIng("+id+")":inLayIng?"askDeleteLayIng("+id+")":"askDelete("+id+")";
+  el.innerHTML='<div style="display:flex;gap:1px"><button class="edit-btn" onclick="openEdit('+id+',\''+store+'\')">✏️</button><button class="del-btn" onclick="'+delFn+'">🗑</button></div>';
+}
 
 // ── EDIT ──────────────────────────────────────────────────────────────────────
 function openEdit(id,store){
@@ -1014,7 +1025,7 @@ function renderHistorial(){
   if(source==="all"||source==="personal") all=all.concat(expenses.filter(function(e){return e.month===month;}));
   if(source==="all"||source==="ingresos") all=all.concat(ingresos.filter(function(e){return e.month===month;}));
   if(source==="all"||source==="layclean") all=all.concat(layExpenses.filter(function(e){return e.month===month;}));
-  if(source==="all"||source==="layclean") all=all.concat(layIngresos.filter(function(e){return e.month===month;}));
+  if(source==="all"||source==="lay_ing") all=all.concat(layIngresos.filter(function(e){return e.month===month;}));
   all.sort(function(a,b){return b.date.localeCompare(a.date);});
   const el=document.getElementById("historial-content");
   if(!all.length){el.innerHTML='<div class="card empty"><div class="empty-icon">📭</div><div class="empty-text">Sin registros en '+month+'</div></div>';return;}
@@ -1080,7 +1091,7 @@ function renderDashboard(){
   const el=document.getElementById("dashboard-content");
   const fmt=n=>n.toLocaleString("es-PE",{minimumFractionDigits:2,maximumFractionDigits:2});
 
-  const fExp=expenses.filter(e=>e.month===month&&e.currency==="PEN"&&e.type!=="Inversion");
+  const fExp=expenses.filter(e=>e.month===month&&e.currency==="PEN"&&e.type!=="Inversion"&&e.type!=="Ingreso"&&e.source!=="ingresos");
   const fInv=expenses.filter(e=>e.month===month&&e.currency==="PEN"&&e.type==="Inversion");
   const fIng=ingresos.filter(e=>e.month===month&&e.currency==="PEN");
   const fLay=layExpenses.filter(e=>e.month===month&&e.currency==="PEN");
